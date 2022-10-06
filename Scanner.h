@@ -2,8 +2,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
 
 #define MAXSTRSIZE 1024
+#define LOOKAHEADDEPTH 10
 
 enum {
 	TNAME = 1,
@@ -20,12 +23,10 @@ enum {
 	TNUMBER, TSTRING,
 	TPLUS, TMINUS, TSTAR,
 	TEQUAL, TNOTEQ, TLE, TLEEQ, TGR, TGREQ,
-	TLPAREN, TRPALEN, TLSQPAREN, TRSQPAREN,
+	TLPAREN, TRPAREN, TLSQPAREN, TRSQPAREN,
 	TASSIGN, TDOT, TCOMMA, TCOLON, TSEMI,
 	TREAD, TWRITE, TBREAK
 };
-
-//extern const int NUMOFTOKEN;
 
 extern int init_scan(char *filename);
 extern int scan();
@@ -37,6 +38,7 @@ extern int num_attr;
 extern char string_attr[MAXSTRSIZE];
 static void clear_attr();
 
+static void fulfill_char();
 static void update_char();
 
 static int is_EOF();
@@ -47,5 +49,16 @@ static int is_comment();
 static void skip_EOL();
 static void skip_comment();
 
+static int is_alpha();
+static int is_keyword();
+static void read_keyword();
+static void read_name();
+
+static int is_symbol();
+static void read_symbol();
+
 static int is_num();
 static void read_num();
+
+static int is_string();
+static void read_string();
