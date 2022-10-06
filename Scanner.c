@@ -70,11 +70,12 @@ static void fulfill_char() {
 }
 
 static void update_char() {
+printf("%c", c[0]); fflush(stdout);
+
 	for (int i = 0; i < LOOKAHEADDEPTH; i++)
 		c[i] = c[i+1];
 
 	c[LOOKAHEADDEPTH-1] = fgetc(src);
-printf("%c", c[0]);
 }
 
 static int is_EOF() {
@@ -444,12 +445,12 @@ static void read_keyword() {
 
 static void read_name() {
 	for (int i = 0; isalnum(c[0]); i++, update_char()) {
-		string_attr[i] = c[0];
-
 		if (i >= MAXSTRSIZE-1) {
 			printf("ERROR: string_attr[i]; i >= MAXSTRSIZE-1\n");
 			exit(-1);
 		}
+
+		string_attr[i] = c[0];
 	}
 }
 
@@ -583,16 +584,25 @@ static int is_string() {
 
 static void read_string() {
 	update_char();
+	if (c[0] == '\'') return;
 
-	for (int i = 0;
-		c[0] != '\'';
-		i++, update_char()
-	) {
-		string_attr[i] = c[0];
-
-		if (i >= MAXSTRSIZE-1) {
+	for (int i = 0;; i++, update_char()) {
+		if (i >= MAXSTRSIZE-2) {
 			printf("ERROR: read_string(); string_attr[i]; i >= MAXSTRSIZE-1\n");
 			exit(-1);
+		}
+
+		string_attr[i] = c[0];
+
+		if (c[1] == '\'') {
+			if (c[2] == '\'') {
+				string_attr[++i] = '\'';
+				string_attr[++i] = '\'';
+			}
+
+			update_char();
+			update_char();
+			break;
 		}
 	}
 }

@@ -25,7 +25,7 @@ int main(const int argc, char *argv[]) {
 
 	int token_code;
 	while ((token_code = scan()) >= 0) {
-		printf("%d ", token_code);
+		printf("$%d", token_code); fflush(stdout);
 	} end_scan();
 	printf("\n");
 }
