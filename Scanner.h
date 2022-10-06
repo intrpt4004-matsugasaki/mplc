@@ -28,6 +28,8 @@ enum {
 	TREAD, TWRITE, TBREAK
 };
 
+extern char *tokencode_to_str(const int CODE);
+
 extern int init_scan(char *filename);
 extern int scan();
 extern void end_scan();

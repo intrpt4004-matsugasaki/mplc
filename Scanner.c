@@ -1,5 +1,60 @@
 #include "Scanner.h"
 
+extern char *tokencode_to_str(const int CODE) {
+	switch (CODE) {
+		case TNAME:			return "NAME";
+		case TPROGRAM:		return "program";
+		case TVAR:			return "var";
+		case TARRAY:		return "array";
+		case TOF:			return "of";
+		case TBEGIN:		return "begin";
+		case TEND:			return "end";
+		case TIF:			return "if";
+		case TTHEN:			return "then";
+		case TELSE:			return "else";
+		case TPROCEDURE:	return "procedure";
+		case TRETURN:		return "return";
+		case TCALL:			return "call";
+		case TWHILE:		return "while";
+		case TDO:			return "do";
+		case TNOT:			return "not";
+		case TOR:			return "or";
+		case TDIV:			return "div";
+		case TAND:			return "and";
+		case TCHAR:			return "char";
+		case TINTEGER:		return "integer";
+		case TBOOLEAN:		return "boolean";
+		case TREADLN:		return "readln";
+		case TWRITELN:		return "writeln";
+		case TTRUE:			return "true";
+		case TFALSE:		return "false";
+		case TNUMBER:		return "NUMBER";
+		case TSTRING:		return "STRING";
+		case TPLUS:			return "+";
+		case TMINUS:		return "-";
+		case TSTAR:			return "*";
+		case TEQUAL:		return "=";
+		case TNOTEQ:		return "<>";
+		case TLE:			return "<";
+		case TLEEQ:			return "<=";
+		case TGR:			return ">";
+		case TGREQ:			return ">=";
+		case TLPAREN:		return "(";
+		case TRPAREN:		return ")";
+		case TLSQPAREN:		return "[";
+		case TRSQPAREN:		return "]";
+		case TASSIGN:		return ":=";
+		case TDOT:			return ".";
+		case TCOMMA:		return ",";
+		case TCOLON:		return ":";
+		case TSEMI:			return ";";
+		case TREAD:			return "read";
+		case TWRITE:		return "write";
+		case TBREAK:		return "break";
+	}
+}
+
+
 static FILE *src;
 static int linenum = 1;
 
@@ -594,14 +649,18 @@ static void read_string() {
 
 		string_attr[i] = c[0];
 
-		if (c[1] == '\'') {
-			if (c[2] == '\'') {
-				string_attr[++i] = '\'';
-				string_attr[++i] = '\'';
-			}
+		// BUG
+		if (c[1] == '\'' && c[2] == '\'') {
+			string_attr[++i] = '\'';
+			string_attr[++i] = '\'';
+			update_char();
+			update_char();
 
+			continue;
+		} else if (c[1] == '\'') {
 			update_char();
 			update_char();
+
 			break;
 		}
 	}
