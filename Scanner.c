@@ -128,7 +128,7 @@ static void fulfill_char() {
 }
 
 static void update_char() {
-	//printf("%c", c[0]); fflush(stdout);
+	//printf("%c", c[0]);
 
 	for (int i = 0; i < LOOKAHEADDEPTH; i++)
 		c[i] = c[i+1];
