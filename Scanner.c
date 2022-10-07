@@ -103,6 +103,9 @@ extern int scan() {
 	} else if (is_string()) {
 		read_string();
 		return TSTRING;
+	} else {
+		printf("ERROR: unrecognizable character.\n");
+		exit(-1);
 	}
 }
 
@@ -125,7 +128,7 @@ static void fulfill_char() {
 }
 
 static void update_char() {
-printf("%c", c[0]); fflush(stdout);
+	//printf("%c", c[0]); fflush(stdout);
 
 	for (int i = 0; i < LOOKAHEADDEPTH; i++)
 		c[i] = c[i+1];
@@ -170,6 +173,7 @@ static void skip_comment() {
 
 	if (c[0] == '}') return;
 	if (c[0] == '*' && c[1] == '/') {
+		update_char();
 		update_char();
 		return;
 	}
@@ -639,7 +643,6 @@ static int is_string() {
 
 static void read_string() {
 	update_char();
-	if (c[0] == '\'') return;
 
 	for (int i = 0;; i++, update_char()) {
 		if (i >= MAXSTRSIZE-2) {
@@ -647,21 +650,16 @@ static void read_string() {
 			exit(-1);
 		}
 
-		string_attr[i] = c[0];
-
-		// BUG
-		if (c[1] == '\'' && c[2] == '\'') {
-			string_attr[++i] = '\'';
-			string_attr[++i] = '\'';
-			update_char();
+		if (c[0] == '\'' && c[1] == '\'') {
+			string_attr[i] = c[0];
+			string_attr[++i] = c[1];
 			update_char();
 
 			continue;
-		} else if (c[1] == '\'') {
+		} else if (c[0] == '\'') {
 			update_char();
-			update_char();
-
-			break;
-		}
+			return;
+		} else
+			string_attr[i] = c[0];
 	}
 }

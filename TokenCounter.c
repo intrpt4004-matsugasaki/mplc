@@ -1,6 +1,11 @@
 #include "TokenCounter.h"
 
-static Token_t *Token_New(const int CODE) {
+static Token_t *Token_New(
+	const int CODE,
+	const char *NAME,
+	const char *STRING,
+	const int NUMBER) {
+
 	Token_t *self = malloc(sizeof(Token_t));
 	if (self == NULL) {
 		printf("ERROR: Token_New\n");
@@ -8,24 +13,24 @@ static Token_t *Token_New(const int CODE) {
 	}
 	self->CODE = CODE;
 
-	return self;
-}
+	if (CODE == TNAME) {
+		self->NAME = malloc(strlen(NAME));
+		if (self->NAME == NULL) {
+			printf("ERROR: Token_New\n");
+			exit(-1);
+		}
+		strcpy(self->NAME, NAME);
 
-static Token_t *Token_NewStr(const char *STRING) {
-	Token_t *self = Token_New(TSTRING);
-	self->STRING = malloc(strlen(STRING));
-	if (self->STRING == NULL) {
-		printf("ERROR: Token_NewStr\n");
-		exit(-1);
-	}
-	strcpy(self->STRING, STRING);
+	} else if (CODE == TSTRING) {
+		self->STRING = malloc(strlen(STRING));
+		if (self->STRING == NULL) {
+			printf("ERROR: Token_New\n");
+			exit(-1);
+		}
+		strcpy(self->STRING, STRING);
 
-	return self;
-}
-
-static Token_t *Token_NewNum(const int NUMBER) {
-	Token_t *self = Token_New(TNUMBER);
-	self->NUMBER = NUMBER;
+	} else if (CODE == TNUMBER)
+		self->NUMBER = NUMBER;
 
 	return self;
 }
@@ -35,10 +40,8 @@ static void Token_Delete(Token_t *self) {
 }
 
 _Token Token = {
-	.New    = Token_New,
-	.NewStr = Token_NewStr,
-	.NewNum = Token_NewNum,
-	.Delete = Token_Delete
+	.New		= Token_New,
+	.Delete		= Token_Delete
 };
 
 
@@ -51,6 +54,10 @@ static TokenCounter_t *TokenCounter_New() {
 	self->LENGTH	= 0;
 	self->TOKEN		= NULL;
 
+	self->_name		= 0;
+	self->_str		= 0;
+	self->_num		= 0;
+
 	return self;
 }
 
@@ -61,30 +68,37 @@ static void TokenCounter_AppendToken(TokenCounter_t *self, Token_t *TOKEN) {
 		exit(-1);
 	}
 	self->TOKEN[self->LENGTH-1] = TOKEN;
+
+	if (TOKEN->CODE == TNAME) self->_name++;
+	else if (TOKEN->CODE == TSTRING) self->_str++;
+	else if (TOKEN->CODE == TNUMBER) self->_num++;
 }
 
 static void TokenCounter_PrintTable(TokenCounter_t *self) {
-	union {
-		int Int;
-		int Num;
-		char *Str;
-	} count[self->LENGTH];
-	memset(count, -1, sizeof(count));
+	const int MAXTOKENSIZE = TBREAK;
 
-	for (int i = 0; i < self->LENGTH; i++) {
-		if (count[self->TOKEN[i]->CODE].Int == -1)
-			count[self->TOKEN[i]->CODE].Int = 0;
+	int count[MAXTOKENSIZE];
+	memset(count, 0, sizeof(count));
 
-		count[self->TOKEN[i]->CODE].Int++;
-	}
+	for (int i = 0; i < self->LENGTH; i++)
+		count[self->TOKEN[i]->CODE]++;
 
-	for (int i = 0; i < self->LENGTH; i++) {
-		if (count[i].Int == -1) continue;
+	for (int i = 0; i < MAXTOKENSIZE; i++) {
+		if (count[i] == 0) continue;
+		if (i == TNAME) {
+			//
+			continue;
+		} else if (i == TSTRING) {
+			//
+			continue;
+		} else if (i == TNUMBER) {
+			continue;
+		}
 
 		printf("\"%s", tokencode_to_str(i));
 		for (int j = strlen(tokencode_to_str(i)); j < LOOKAHEADDEPTH; j++)
 			printf(" ");
-		printf("\" %d\n", count[i].Int);
+		printf("\" %d\n", count[i]);
 	}
 }
 
