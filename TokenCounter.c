@@ -80,18 +80,40 @@ static void TokenCounter_PrintTable(TokenCounter_t *self) {
 	int count[MAXTOKENSIZE];
 	memset(count, 0, sizeof(count));
 
-	for (int i = 0; i < self->LENGTH; i++)
+	struct {
+		char *name;
+		int count;
+	} name_count[self->_name];
+	memset(name_count, 0, sizeof(name_count));
+	int nac = 0;
+
+	for (int i = 0; i < self->LENGTH; i++) {
 		count[self->TOKEN[i]->CODE]++;
+
+		if (self->TOKEN[i]->CODE == TNAME) {
+			int flag = 0;
+			for (int j = 0; j < nac; j++) {
+				if (!strcmp(self->TOKEN[i]->NAME, name_count[j].name)) {
+					name_count[j].count++;
+					flag = 1;
+				}
+			}
+			if (!flag) {
+				name_count[nac].name = self->TOKEN[i]->NAME;
+				name_count[nac++].count = 1;
+			}
+		}
+	}
 
 	for (int i = 0; i < MAXTOKENSIZE; i++) {
 		if (count[i] == 0) continue;
 		if (i == TNAME) {
-			//
-			continue;
-		} else if (i == TSTRING) {
-			//
-			continue;
-		} else if (i == TNUMBER) {
+			for (int j = 0; j < nac; j++) {
+				printf("\"%s", name_count[j].name);
+				for (int k = strlen(name_count[j].name); k < LOOKAHEADDEPTH; k++)
+					printf(" ");
+				printf("\" %d\n", name_count[j].count);
+			}
 			continue;
 		}
 
