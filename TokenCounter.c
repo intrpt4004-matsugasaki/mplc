@@ -76,6 +76,7 @@ static void TokenCounter_AppendToken(TokenCounter_t *self, Token_t *TOKEN) {
 
 static void TokenCounter_PrintTable(TokenCounter_t *self) {
 	const int MAXTOKENSIZE = TBREAK;
+	const int MAXSUPRSIZE = LOOKAHEADDEPTH + LOOKAHEADDEPTH/2;
 
 	int count[MAXTOKENSIZE];
 	memset(count, 0, sizeof(count));
@@ -110,7 +111,7 @@ static void TokenCounter_PrintTable(TokenCounter_t *self) {
 		if (i == TNAME) {
 			for (int j = 0; j < nac; j++) {
 				printf("\"%s", name_count[j].name);
-				for (int k = strlen(name_count[j].name); k < LOOKAHEADDEPTH; k++)
+				for (int k = strlen(name_count[j].name); k < MAXSUPRSIZE; k++)
 					printf(" ");
 				printf("\" %d\n", name_count[j].count);
 			}
@@ -118,7 +119,7 @@ static void TokenCounter_PrintTable(TokenCounter_t *self) {
 		}
 
 		printf("\"%s", tokencode_to_str(i));
-		for (int j = strlen(tokencode_to_str(i)); j < LOOKAHEADDEPTH; j++)
+		for (int j = strlen(tokencode_to_str(i)); j < MAXSUPRSIZE; j++)
 			printf(" ");
 		printf("\" %d\n", count[i]);
 	}

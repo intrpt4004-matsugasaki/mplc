@@ -104,7 +104,7 @@ extern int scan() {
 		read_string();
 		return TSTRING;
 	} else {
-		printf("ERROR: unrecognizable character.\n");
+		printf("ERROR: unrecognizable character: %c\n", c[0]);
 		exit(-1);
 	}
 }
@@ -171,7 +171,11 @@ static void skip_comment() {
 		exit(-1);
 	};
 
-	if (c[0] == '}') return;
+	if (c[0] == '}') {
+		update_char();
+		return;
+	}
+	
 	if (c[0] == '*' && c[1] == '/') {
 		update_char();
 		update_char();

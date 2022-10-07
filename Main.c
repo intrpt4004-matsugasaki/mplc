@@ -36,3 +36,5 @@ int main(const int argc, char *argv[]) {
 
 	//TokenCounter.Delete(counter);
 }
+
+//ERROR: 14, 14p, 19p
