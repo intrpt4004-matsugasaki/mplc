@@ -1,12 +1,14 @@
-#pragma once
+#ifndef Parser_h
+#define Parser_h
 
 #include "Scanner.h"
 
-extern int token;
-extern void update_token();
+static void update_token();
 
 enum {
-	NORMAL	= 0,
-	ERROR	= 1,
+	NORMAL	= 1,
+	ERROR	= 0,
 }
 extern int parse_program();
+
+#endif

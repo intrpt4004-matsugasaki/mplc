@@ -11,7 +11,8 @@
 #include <stdlib.h>
 
 #include "Scanner.h"
-#include "TokenCounter.h"
+//#include "TokenCounter.h"
+#include "Parser.h"
 
 int main(const int argc, char *argv[]) {
 	if (argc < 2) {
@@ -26,11 +27,13 @@ int main(const int argc, char *argv[]) {
 		exit(-1);
 	}
 
-	TokenCounter_t *counter = TokenCounter.New();
+/*	TokenCounter_t *counter = TokenCounter.New();
 	int token_code;
 	while ((token_code = scan()) >= 0) {
 			TokenCounter.AppendToken(counter, Token.New(token_code, string_attr, string_attr, num_attr));
 	} end_scan();
 
-	TokenCounter.PrintTable(counter);
+	TokenCounter.PrintTable(counter);*/
+
+	parse_program();
 }
