@@ -104,7 +104,8 @@ extern int scan() {
 		read_string();
 		return TSTRING;
 	} else {
-		printf("ERROR: unrecognizable character: %c\n", c[0]);
+		/* ERROR */
+		printf("[ERROR] Scanner: Unrecognized character %c appeared.\n", c[0]);
 		exit(-1);
 	}
 }
@@ -128,8 +129,6 @@ static void fulfill_char() {
 }
 
 static void update_char() {
-	//printf("%c", c[0]);
-
 	for (int i = 0; i < LOOKAHEADDEPTH; i++)
 		c[i] = c[i+1];
 
@@ -167,7 +166,8 @@ static void skip_EOL() {
 
 static void skip_comment() {
 	if (is_EOF()) {
-		printf("ERROR: comment eof\n");
+		/* ERROR */
+		printf("[ERROR] Scanner: EOF reached during comments.\n");
 		exit(-1);
 	};
 
@@ -509,7 +509,8 @@ static void read_keyword() {
 static void read_name() {
 	for (int i = 0; isalnum(c[0]); i++, update_char()) {
 		if (i >= MAXSTRSIZE-1) {
-			printf("ERROR: string_attr[i]; i >= MAXSTRSIZE-1\n");
+			/* ERROR */
+			printf("[ERROR] Scanner: The number of readable characters has been exceeded.\n");
 			exit(-1);
 		}
 
@@ -650,7 +651,8 @@ static void read_string() {
 
 	for (int i = 0;; i++, update_char()) {
 		if (i >= MAXSTRSIZE-2) {
-			printf("ERROR: read_string(); string_attr[i]; i >= MAXSTRSIZE-1\n");
+			/* ERROR */
+			printf("[ERROR] Scanner: The number of readable characters has been exceeded.\n");
 			exit(-1);
 		}
 

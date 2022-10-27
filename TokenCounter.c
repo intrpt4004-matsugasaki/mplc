@@ -8,7 +8,8 @@ static Token_t *Token_New(
 
 	Token_t *self = malloc(sizeof(Token_t));
 	if (self == NULL) {
-		printf("ERROR: Token_New\n");
+		/* ERROR */
+		printf("[ERROR] TokenCounter: malloc failed.\n");
 		exit(-1);
 	}
 	self->CODE = CODE;
@@ -16,7 +17,8 @@ static Token_t *Token_New(
 	if (CODE == TNAME) {
 		self->NAME = malloc(strlen(NAME));
 		if (self->NAME == NULL) {
-			printf("ERROR: Token_New\n");
+			/* ERROR */
+			printf("[ERROR] TokenCounter: malloc failed.\n");
 			exit(-1);
 		}
 		strcpy(self->NAME, NAME);
@@ -24,7 +26,8 @@ static Token_t *Token_New(
 	} else if (CODE == TSTRING) {
 		self->STRING = malloc(strlen(STRING));
 		if (self->STRING == NULL) {
-			printf("ERROR: Token_New\n");
+			/* ERROR */
+			printf("[ERROR] TokenCounter: malloc failed.\n");
 			exit(-1);
 		}
 		strcpy(self->STRING, STRING);
@@ -48,7 +51,8 @@ _Token Token = {
 static TokenCounter_t *TokenCounter_New() {
 	TokenCounter_t *self = malloc(sizeof(Token_t));
 	if (self == NULL) {
-		printf("ERROR: TokenCounter_New\n");
+		/* ERROR */
+		printf("[ERROR] TokenCounter: malloc failed.\n");
 		exit(-1);
 	}
 	self->LENGTH	= 0;
@@ -64,7 +68,8 @@ static TokenCounter_t *TokenCounter_New() {
 static void TokenCounter_AppendToken(TokenCounter_t *self, Token_t *TOKEN) {
 	self->TOKEN = realloc(self->TOKEN, sizeof(Token_t *) * ++self->LENGTH);
 	if (self->TOKEN == NULL) {
-		printf("ERROR: TokenCounter_AppendToken\n");
+		/* ERROR */
+		printf("[ERROR] TokenCounter: realloc failed.\n");
 		exit(-1);
 	}
 	self->TOKEN[self->LENGTH-1] = TOKEN;

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Tokenounter_h
+#define TokenCounter_h
 
 #include "Scanner.h"
 
@@ -38,3 +39,5 @@ typedef struct {
 } _TokenCounter;
 
 extern _TokenCounter TokenCounter;
+
+#endif

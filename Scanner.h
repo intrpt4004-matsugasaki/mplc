@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Scanner_h
+#define Scanner_h
 
 #include <stdio.h>
 #include <string.h>
@@ -64,3 +65,5 @@ static void read_num();
 
 static int is_string();
 static void read_string();
+
+#endif
