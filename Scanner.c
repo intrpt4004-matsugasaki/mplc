@@ -56,13 +56,12 @@ extern char *tokencode_to_str(const int CODE) {
 
 
 static FILE *src;
+static int c[LOOKAHEADDEPTH];
 static int linenum = 1;
 
 int num_attr;
 char string_attr[MAXSTRSIZE];
-int token_code;
-
-static int c[LOOKAHEADDEPTH];
+static int token_code;
 
 extern int init_scan(char *filename) {
 	src = fopen(filename, "r");
