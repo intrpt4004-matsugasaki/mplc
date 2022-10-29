@@ -15,7 +15,7 @@ static Token_t *Token_New(
 	self->CODE = CODE;
 
 	if (CODE == TNAME) {
-		self->NAME = malloc(strlen(NAME));
+		self->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
 		if (self->NAME == NULL) {
 			/* ERROR */
 			printf("[ERROR] TokenCounter: malloc failed.\n");
@@ -24,7 +24,7 @@ static Token_t *Token_New(
 		strcpy(self->NAME, NAME);
 
 	} else if (CODE == TSTRING) {
-		self->STRING = malloc(strlen(STRING));
+		self->STRING = malloc(sizeof(char) * (strlen(NAME)+1));
 		if (self->STRING == NULL) {
 			/* ERROR */
 			printf("[ERROR] TokenCounter: malloc failed.\n");

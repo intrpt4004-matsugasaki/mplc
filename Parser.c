@@ -78,11 +78,50 @@ static int parse_variable_declaration() {
 	if (!parse(TSEMI))
 		return error("");
 
-	while (1) {
-		if (is_variable_names())
-			if (!parse_variable_names())
-				return error("");
+	while (is_variable_names()) {
+		if (!parse_variable_names())
+			return error("");
+
+		if (!parse(TCOLON))
+			return error("");
+
+		if (!parse_type())
+			return error("");
+
+		if (!parse(TSEMI))
+			return error("");
 	}
+
+	return NORMAL;
+}
+
+static int parse_variable_names() {
+	if (!parse_variable_name())
+		return error("");
+
+	while (is(TCOLON)) {
+		if (!parse(TCOLON))
+			return error("");
+
+		if (!parse_variable_name())
+			return error("");
+	}
+		
+}
+
+static int parse_type() {
+	if (is_standard_type()) {
+		if (!parse_standard_type())
+			return error("");
+		return NORMAL;
+	}
+	
+	if (is_array_type()) {
+		if (!parse_array_type())
+			return NORMAL;
+	}
+
+	return ERROR;
 }
 
 static int is_subprogram_declaration() {
