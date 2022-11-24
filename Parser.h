@@ -9,6 +9,6 @@ enum {
 	NORMAL	= 1,
 	ERROR	= 0,
 }
-extern int parse_program();
+extern int read_program();
 
 #endif
