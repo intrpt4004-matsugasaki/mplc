@@ -2,7 +2,7 @@
  * mplc: mpl compiler                       *
  *                                          *
  * $ gcc -std=c99 -pedantic Main.c          *
- *                      Scanner.c -o mplc   *
+ *             Scanner.c Parser.c -o mplc   *
  *                                          *
  *                     gcc version: 12.2.0  *
  ********************************************/
@@ -17,13 +17,13 @@
 int main(const int argc, char *argv[]) {
 	if (argc < 2) {
 		/* ERROR */
-		printf("[ERROR] compiler: File name is not given.\n");
+		printf("[ERROR] Compiler: File name is not given.\n");
 		exit(-1);
 	}
 
 	if (init_scan(argv[1]) < 0) {
 		/* ERROR */
-		printf("[ERROR] compiler: File %s can not open.\n", argv[1]);
+		printf("[ERROR] Compiler: File %s can not open.\n", argv[1]);
 		exit(-1);
 	}
 

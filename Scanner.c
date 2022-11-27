@@ -161,6 +161,7 @@ static void skip_EOL() {
 	} else {
 		update_char();
 	}
+	linenum++;
 }
 
 static void skip_comment() {
@@ -169,6 +170,8 @@ static void skip_comment() {
 		printf("[ERROR] Scanner: EOF reached during comments.\n");
 		exit(-1);
 	};
+
+	if (is_EOL()) linenum++;
 
 	if (c[0] == '}') {
 		update_char();
