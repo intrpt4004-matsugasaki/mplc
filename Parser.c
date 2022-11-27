@@ -16,6 +16,7 @@ static int newline = 1;
 
 static void update_token() {
 	/* print */
+	// update
 	token_prev_prev_prev = token_prev_prev;
 	token_prev_prev = token_prev;
 
@@ -24,16 +25,18 @@ static void update_token() {
 	strcpy(token_prev.str, string_attr);
 
 	if (token_prev_prev.code != 0) {
+		// whitespace
 		if (!newline && token_prev_prev.code != TSEMI
-		&& token_prev_prev.code != TCOMMA
-		&& token_prev_prev.code != TLPAREN
-		&& token_prev_prev.code != TRPAREN
-		&& token_prev_prev.code != TLSQPAREN
-		&& token_prev_prev.code != TRSQPAREN
-		&& token_prev_prev_prev.code != TLPAREN
-		&& token_prev_prev_prev.code != TLSQPAREN)
+			&& token_prev_prev.code != TCOMMA
+			&& token_prev_prev.code != TLPAREN
+			&& token_prev_prev.code != TRPAREN
+			&& token_prev_prev.code != TLSQPAREN
+			&& token_prev_prev.code != TRSQPAREN
+			&& token_prev_prev_prev.code != TLPAREN
+			&& token_prev_prev_prev.code != TLSQPAREN)
 			printf(" ");
 
+		// print token
 		if (token_prev_prev.code == TNUMBER) {
 			printf("%d", token_prev_prev.num);
 		} else if (token_prev_prev.code == TSTRING) {
@@ -50,9 +53,9 @@ static void update_token() {
 
 		newline = 0;
 		if (token_prev_prev.code == TSEMI
-		|| token_prev_prev.code == TBEGIN
-		|| token_prev_prev.code == TTHEN
-		|| token_prev_prev.code == TELSE) {
+			|| token_prev_prev.code == TBEGIN
+			|| token_prev_prev.code == TTHEN
+			|| token_prev_prev.code == TELSE && token_prev.code != TBEGIN && token_prev.code != TIF) {
 			printf("\n");
 			newline = 1;
 		}
@@ -533,10 +536,9 @@ static int is_assignment_statement() {
 }
 
 static int read_assignment_statement() {
-printf("now[%s]", tokencode_to_str(token));
 	if (!read_left_part())
 		return error("read_left_part failed.");
-printf("now[%s]", tokencode_to_str(token));
+
 	if (!read(TASSIGN))
 		return error("':=' is not found.");
 

@@ -251,6 +251,13 @@ static int is_keyword_procedure() {
 		&& c[8] == 'e' && !isalnum(c[9]);
 }
 
+static int is_keyword_return() {
+	return c[0] == 'r' && c[1] == 'e'
+		&& c[2] == 't' && c[3] == 'u'
+		&& c[4] == 'r' && c[5] == 'n'
+		&& !isalnum(c[6]);
+}
+
 static int is_keyword_call() {
 	return c[0] == 'c' && c[1] == 'a'
 		&& c[2] == 'l' && c[3] == 'l'
@@ -294,14 +301,12 @@ static int is_keyword_char() {
 		&& !isalnum(c[4]);
 }
 
-
 static int is_keyword_integer() {
 	return c[0] == 'i' && c[1] == 'n'
 		&& c[2] == 't' && c[3] == 'e'
 		&& c[4] == 'g' && c[5] == 'e'
 		&& c[6] == 'r' && !isalnum(c[7]);
 }
-
 
 static int is_keyword_boolean() {
 	return c[0] == 'b' && c[1] == 'o'
@@ -360,15 +365,15 @@ static int is_keyword() {
 		|| is_keyword_begin() || is_keyword_end()
 		|| is_keyword_if() || is_keyword_then()
 		|| is_keyword_else() || is_keyword_procedure()
-		|| is_keyword_call() || is_keyword_while()
-		|| is_keyword_do() || is_keyword_not()
-		|| is_keyword_or() || is_keyword_div()
-		|| is_keyword_and() || is_keyword_char()
-		|| is_keyword_integer() || is_keyword_boolean()
-		|| is_keyword_readln() || is_keyword_writeln()
-		|| is_keyword_true() || is_keyword_false()
-		|| is_keyword_read() || is_keyword_write()
-		|| is_keyword_break();
+		|| is_keyword_return() || is_keyword_call()
+		|| is_keyword_while() || is_keyword_do()
+		|| is_keyword_not() || is_keyword_or()
+		|| is_keyword_div() || is_keyword_and()
+		|| is_keyword_char() || is_keyword_integer()
+		|| is_keyword_boolean() || is_keyword_readln()
+		|| is_keyword_writeln() || is_keyword_true()
+		|| is_keyword_false() || is_keyword_read()
+		|| is_keyword_write() || is_keyword_break();
 }
 
 static void read_keyword() {
@@ -420,6 +425,11 @@ static void read_keyword() {
 	if (is_keyword_procedure()) {
 		for (int i = 0; i < 9; i++) update_char();
 		token_code = TPROCEDURE;
+	}
+
+	if (is_keyword_return()) {
+		for (int i = 0; i < 6; i++) update_char();
+		token_code = TRETURN;
 	}
 
 	if (is_keyword_call()) {
