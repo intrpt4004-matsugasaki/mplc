@@ -1,76 +1,13 @@
 #include "Parser.h"
 
 static int token;
-
-typedef struct {
-	int code;
-	int num;
-	char str[MAXSTRSIZE];
-} tset;
-
-tset token_prev = { 0, 0, "" };
-tset token_prev_prev = { 0, 0, "" };
-tset token_prev_prev_prev = { 0, 0, "" };
-
-static int newline = 1;
+program prog;
 
 static void update_token() {
-	/* print */
-	// update
-	token_prev_prev_prev = token_prev_prev;
-	token_prev_prev = token_prev;
-
-	token_prev.code = token;
-	token_prev.num = num_attr;
-	strcpy(token_prev.str, string_attr);
-
-	if (token_prev_prev.code != 0) {
-		// whitespace
-		if (!newline && token_prev_prev.code != TSEMI
-			&& token_prev_prev.code != TCOMMA
-			&& token_prev_prev.code != TLPAREN
-			&& token_prev_prev.code != TRPAREN
-			&& token_prev_prev.code != TLSQPAREN
-			&& token_prev_prev.code != TRSQPAREN
-			&& token_prev_prev_prev.code != TLPAREN
-			&& token_prev_prev_prev.code != TLSQPAREN)
-			printf(" ");
-
-		// print token
-		if (token_prev_prev.code == TNUMBER) {
-			printf("%d", token_prev_prev.num);
-		} else if (token_prev_prev.code == TSTRING) {
-			printf("'%s'", token_prev_prev.str);
-		} else if (token_prev_prev.code == TNAME) {
-			printf("%s", token_prev_prev.str);
-		} else if (token_prev_prev.code == TELSE && !newline) {
-			printf("\n%s", tokencode_to_str(token_prev_prev.code));
-		} else if (token_prev_prev.code == TEND && !newline) {
-			printf("\n%s", tokencode_to_str(token_prev_prev.code));
-		} else {
-			printf("%s", tokencode_to_str(token_prev_prev.code));
-		}
-
-		newline = 0;
-		if (token_prev_prev.code == TSEMI
-			|| token_prev_prev.code == TBEGIN
-			|| token_prev_prev.code == TTHEN
-			|| token_prev_prev.code == TELSE && token_prev.code != TBEGIN && token_prev.code != TIF) {
-			printf("\n");
-			newline = 1;
-		}
-	}
-	/* - */
-
 	token = scan();
 }
 
 static int error(char *message) {
-	if (!newline) {
-		printf("\n\n");
-		newline = 1;
-	}
-
 	printf("[ERROR] Parser: %s (at line %d)\n", message, get_linenum());
 	end_scan();
 
@@ -91,47 +28,48 @@ static int read(const int TOKEN_CODE) {
 
 extern int parse_program() {
 	update_token();
-
-	int err = NORMAL;
+	prog.VAR_LEN = 0;
 
 	if (!read(TPROGRAM)) {
-		err = error("'program' is not found.");
-		goto PRINT_RET;
+		return error("'program' is not found.");
 	}
 
+	strcpy(prog.NAME, string_attr);
 	if (!read(TNAME)) {
-		err = error("program name is not found.");
-		goto PRINT_RET;
+		return error("program name is not found.");
 	}
 
 	if (!read(TSEMI)) {
-		err = error("';' is not found.");
-		goto PRINT_RET;
+		return error("';' is not found.");
 	}
 
 	if (!read_block()) {
-		err = error("read_block failed.");
-		goto PRINT_RET;
+		return error("read_block failed.");
 	}
 
 	if (!read(TDOT)) {
-		err = error("'.' is not found.");
-		goto PRINT_RET;
+		return error("'.' is not found.");
 	}
 
-	printf("%s", tokencode_to_str(token_prev.code)); // {redundant: .}
 	return NORMAL;
-
-	PRINT_RET:
-	printf("                subsequent tokens: [%s] [%s]\n", tokencode_to_str(token_prev.code), tokencode_to_str(token));
-	return err;
 }
 
 static int read_block() {
 	while (is_variable_declaration() || is_subprogram_declaration()) {
-		if (is_variable_declaration())
+		if (is_variable_declaration()) {
 			if (!read_variable_declaration())
 				return error("read_variable_declaration failed.");
+
+			for (int i = 0; i < vars_len - 1; i++) {
+				strcpy(prog.VAR[prog.VAR_LEN + i].NAME, vars[i].NAME);
+				prog.VAR[prog.VAR_LEN + i].TYPE = vars[i].TYPE;
+				if (vars[i].TYPE == TARRAY) {
+					prog.VAR[prog.VAR_LEN + i].ARR_TYPE = vars[vars_len + i].ARR_TYPE;
+					prog.VAR[prog.VAR_LEN + i].ARR_NUM = vars[vars_len + i].ARR_NUM;
+				}
+			}
+			prog.VAR_LEN += vars_len;
+		}
 
 		if (is_subprogram_declaration())
 			if (!read_subprogram_declaration())
@@ -148,7 +86,11 @@ static int is_variable_declaration() {
 	return is(TVAR);
 }
 
+static var vars[MAXELEMSIZE];
+static int vars_len;
 static int read_variable_declaration() {
+	vars_len = 0;
+
 	if (!read(TVAR))
 		return error("'var' is not found.");
 
@@ -164,6 +106,16 @@ static int read_variable_declaration() {
 	if (!read(TSEMI))
 		return error("';' is not found.");
 
+	for (int i = 0; i < var_name_len; i++) {
+		strcpy(vars[vars_len + i].NAME, var_name[i]);
+		vars[vars_len + i].TYPE = var_type;
+		if (var_type == TARRAY) {
+			vars[vars_len + i].ARR_TYPE = var_arr_type;
+			vars[vars_len + i].ARR_NUM = var_arr_num;
+		}
+	}
+	vars_len += var_name_len + 1;
+
 	while (is_variable_names()) {
 		if (!read_variable_names())
 			return error("read_variable_names failed.");
@@ -176,6 +128,16 @@ static int read_variable_declaration() {
 
 		if (!read(TSEMI))
 			return error("';' is not found.");
+
+		for (int i = 0; i < var_name_len; i++) {
+			strcpy(vars[vars_len + i].NAME, var_name[i]);
+			vars[vars_len + i].TYPE = var_type;
+			if (var_type == TARRAY) {
+				vars[vars_len + i].ARR_TYPE = var_arr_type;
+				vars[vars_len + i].ARR_NUM = var_arr_num;
+			}
+		}
+		vars_len += var_name_len + 1;
 	}
 
 	return NORMAL;
@@ -185,7 +147,12 @@ static int is_variable_names() {
 	return is_variable_name();
 }
 
+static char var_name[MAXELEMSIZE][MAXSTRSIZE];
+static int var_name_len;
 static int read_variable_names() {
+	var_name_len = 0;
+
+	strcpy(var_name[var_name_len++], string_attr);
 	if (!read_variable_name())
 		return error("read_variable_name failed.");
 
@@ -193,6 +160,7 @@ static int read_variable_names() {
 		if (!read(TCOMMA))
 			return error("',' is not found.");
 
+		strcpy(var_name[var_name_len++], string_attr);
 		if (!read_variable_name())
 			return error("read_variable_name failed.");
 	}
@@ -209,7 +177,10 @@ static int read_variable_name() {
 		return error("variable name is not found.");
 }
 
+static int var_type;
 static int read_type() {
+	var_type = token;
+
 	if (is_standard_type()) {
 		if (!read_standard_type())
 			return error("read_standard_type failed.");
@@ -255,6 +226,8 @@ static int is_array_type() {
 	return is(TARRAY);
 }
 
+static int var_arr_num;
+static int var_arr_type;
 static int read_array_type() {
 	if (!read(TARRAY))
 		return error("'array' is not found.");
@@ -262,6 +235,7 @@ static int read_array_type() {
 	if (!read(TLSQPAREN))
 		return error("'[' is not found.");
 
+	var_arr_num = num_attr;
 	if (!read(TNUMBER))
 		return error("number is not found.");
 
@@ -271,6 +245,7 @@ static int read_array_type() {
 	if (!read(TOF))
 		return error("'of' is not found.");
 
+	var_arr_type = token;
 	if (!read_standard_type())
 		return error("read_standard_type failed.");
 

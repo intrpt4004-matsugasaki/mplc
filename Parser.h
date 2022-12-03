@@ -3,6 +3,35 @@
 
 #include "Scanner.h"
 
+#define MAXELEMSIZE 100
+
+typedef struct {
+	char NAME[MAXSTRSIZE];
+
+	int TYPE; // TINTEGER / TBOOLEAN / TCHAR / TARRAY
+	int ARR_TYPE; // TINTEGER / TBOOLEAN / TCHAR / 0
+	int ARR_NUM; // array[arr_num] of arr_type / 0
+} var;
+
+typedef struct {
+	char NAME[MAXSTRSIZE];
+
+	int VAR_LEN;
+	var VAR[MAXELEMSIZE];
+} proc;
+
+typedef struct {
+	char NAME[MAXSTRSIZE];
+
+	int VAR_LEN;
+	var VAR[MAXELEMSIZE];
+
+	int PROC_LEN;
+	proc PROC[MAXELEMSIZE];
+} program;
+
+extern program prog;
+
 static void update_token();
 
 enum {
@@ -19,20 +48,27 @@ extern int parse_program();
 
 static int read_block();
 
+static var vars[MAXELEMSIZE];
+static int vars_len;
 static int is_variable_declaration();
 static int read_variable_declaration();
 
 static int is_variable_names();
 static int read_variable_names();
 
+static char var_name[MAXELEMSIZE][MAXSTRSIZE];
+static int var_name_len;
 static int is_variable_name();
 static int read_variable_name();
 
+static int var_type;
 static int read_type();
 
 static int is_standard_type();
 static int read_standard_type();
 
+static int var_arr_num;
+static int var_arr_type;
 static int is_array_type();
 static int read_array_type();
 
