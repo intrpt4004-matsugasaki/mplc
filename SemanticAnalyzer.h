@@ -6,4 +6,7 @@
 
 extern int semantic_analyze();
 
+static void print_xref_table();
+static void _dump();
+
 #endif

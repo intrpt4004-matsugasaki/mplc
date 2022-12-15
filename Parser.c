@@ -1,5 +1,20 @@
 #include "Parser.h"
 
+extern char *statementcode_to_str(const stmt_kind CODE) {
+	switch (CODE) {
+		case SASSN:		return "ASSIGN";
+		case SCOND:		return "CONDITION";
+		case SITER:		return "ITERATION";
+		case SBRK:		return "BREAK";
+		case SCALL:		return "CALL";
+		case SRET:		return "RETURN";
+		case SIN:		return "INPUT";
+		case SOUT:		return "OUTPUT";
+		case SCOMP:		return "COMPOUND";
+		case SEMPTY:	return "EMPTY";
+	}
+}
+
 static int token;
 static void update_token() {
 	token = scan();
@@ -72,8 +87,9 @@ static int read_block() {
 		}
 	}
 
-	if (!read_compound_statement())
-		return error("read_compound_statement failed.");
+	if (!read_toplevel_statement())
+		return error("read_toplevel_statement(~= read_compound_statement) failed.");
+	store_toplevel_statement();
 
 	return NORMAL;
 }
@@ -82,7 +98,7 @@ static int is_variable_declaration() {
 	return is(TVAR);
 }
 
-static var var_tmp[MAXELEMSIZE];
+static var var_tmp[MAXVARSIZE];
 static int var_tmp_len;
 static int read_variable_declaration() {
 	// init var_tmp
@@ -175,7 +191,7 @@ static int is_variable_names() {
 	return is_variable_name();
 }
 
-static char varname_tmp[MAXELEMSIZE][MAXSTRSIZE];
+static char varname_tmp[MAXVARSIZE][MAXSTRSIZE];
 static int varname_tmp_len;
 static int read_variable_names() {
 	// init var_name_tmp
@@ -338,8 +354,14 @@ static int read_subprogram_declaration() {
 	}
 	proc_tmp.VAR_LEN = var_tmp_len;
 
-	if (!read_compound_statement())
-		return error("read_compound_statement failed.");
+	if (!read_toplevel_statement())
+		return error("read_toplevel_statement failed.");
+
+	// stmt_tmp -> proc_tmp.STMT
+	for (int i = 0; i < stmt_tmp_len; i++) {
+		proc_tmp.STMT[i] = stmt_tmp[i];
+	}
+	proc_tmp.STMT_LEN = stmt_tmp_len;
 
 	if (!read(TSEMI))
 		return error("';' is not found.");
@@ -372,6 +394,12 @@ static void store_subprogram_declaration() {
 		program.PROC[this].VAR[i].TYPE			= proc_tmp.VAR[i].TYPE;
 		program.PROC[this].VAR[i].ARR_TYPE		= proc_tmp.VAR[i].ARR_TYPE;
 		program.PROC[this].VAR[i].ARR_NUM		= proc_tmp.VAR[i].ARR_NUM;
+	}
+
+	// proc_tmp.STMT -> program.PROC[].STMT
+	program.PROC[this].STMT_LEN = proc_tmp.STMT_LEN;
+	for (int i = 0; i < proc_tmp.STMT_LEN; i++) {
+		proc_tmp.STMT[i] = proc_tmp.STMT[i];
 	}
 
 	program.PROC_LEN++;
@@ -467,7 +495,44 @@ static int is_compound_statement() {
 	return is(TBEGIN);
 }
 
+static stmt stmt_tmp[MAXSTMTSIZE];
+static int stmt_tmp_len;
+static int read_toplevel_statement() {
+	// init stmt_tmp
+	stmt_tmp_len = 0;
+	memset(stmt_tmp, 0, sizeof(stmt_tmp));
+
+	if (!read(TBEGIN))
+		return error("'begin' is not found.");
+
+	if (!read_statement())
+		return error("read_statement failed.");
+
+	while (is(TSEMI)) {
+		if (!read(TSEMI))
+			return error("';' is not found.");
+
+		if (!read_statement())
+			return error("read_statement failed.");
+	}
+
+	if (!read(TEND))
+		return error("'end' is not found.");
+
+	return NORMAL;
+}
+
+static void store_toplevel_statement() {
+	// stmt_tmp -> program.STMT
+	program.STMT_LEN = stmt_tmp_len;
+	for (int i = 0; i < stmt_tmp_len; i++) {
+		program.STMT[i] = stmt_tmp[i];
+	}
+}
+
 static int read_compound_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SCOND;
+
 	if (!read(TBEGIN))
 		return error("'begin' is not found.");
 
@@ -537,6 +602,8 @@ static int is_condition_statement() {
 }
 
 static int read_condition_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SCOND;
+
 	if (!read(TIF))
 		return error("'if' is not found.");
 
@@ -565,6 +632,8 @@ static int is_iteration_statement() {
 }
 
 static int read_iteration_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SITER;
+
 	if (!read(TWHILE))
 		return error("'while' is not found.");
 
@@ -585,6 +654,8 @@ static int is_exit_statement() {
 }
 
 static int read_exit_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SBRK;
+
 	if (!read(TBREAK))
 		return error("'break' is not found.");
 	
@@ -596,6 +667,8 @@ static int is_call_statement() {
 }
 
 static int read_call_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SCALL;
+
 	if (!read(TCALL))
 		return error("'call' is not found.");
 
@@ -636,6 +709,8 @@ static int is_return_statement() {
 }
 
 static int read_return_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SRET;
+
 	if (!read(TRETURN))
 		return error("'return' is not found.");
 
@@ -647,6 +722,8 @@ static int is_assignment_statement() {
 }
 
 static int read_assignment_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SASSN;
+
 	if (!read_left_part())
 		return error("read_left_part failed.");
 
@@ -946,6 +1023,8 @@ static int is_input_statement() {
 }
 
 static int read_input_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SIN;
+
 	if (is(TREAD)) {
 		if (!read(TREAD))
 			return error("'read' is not found.");
@@ -981,6 +1060,8 @@ static int is_output_statement() {
 }
 
 static int read_output_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SOUT;
+
 	if (is(TWRITE)) {
 		if (!read(TWRITE))
 			return error("'write' is not found.");
@@ -1033,5 +1114,7 @@ static int read_output_format() {
 }
 
 static int read_empty_statement() {
+	stmt_tmp[stmt_tmp_len++].KIND = SEMPTY;
+
 	return NORMAL;
 }

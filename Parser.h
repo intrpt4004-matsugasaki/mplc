@@ -3,7 +3,10 @@
 
 #include "Scanner.h"
 
-#define MAXELEMSIZE 100
+#define MAXPARAMSIZE	50
+#define MAXVARSIZE		100
+#define MAXPROCSIZE		100
+#define MAXSTMTSIZE		1000
 
 typedef struct {
 	char NAME[MAXSTRSIZE];
@@ -13,25 +16,47 @@ typedef struct {
 	int ARR_NUM; // array[arr_num] of arr_type / 0
 } var;
 
+typedef enum {
+	SASSN, SCOND, SITER, SBRK, SCALL, SRET, SIN, SOUT, SCOMP, SEMPTY
+} stmt_kind;
+
+typedef struct _stmt {
+	stmt_kind KIND;
+
+	// assign statement
+	char ASSN_TO[MAXSTRSIZE];
+
+	// compound statement
+	struct _stmt[MAXSTMTSIZE];
+} stmt;
+
 typedef struct {
 	char NAME[MAXSTRSIZE];
 
 	int PARAM_LEN;
-	var PARAM[MAXELEMSIZE];
+	var PARAM[MAXPARAMSIZE];
 
 	int VAR_LEN;
-	var VAR[MAXELEMSIZE];
+	var VAR[MAXVARSIZE];
+
+	int STMT_LEN;
+	stmt STMT[MAXSTMTSIZE];
 } proc;
 
 typedef struct {
 	char NAME[MAXSTRSIZE];
 
 	int VAR_LEN;
-	var VAR[MAXELEMSIZE];
+	var VAR[MAXVARSIZE];
 
 	int PROC_LEN;
-	proc PROC[MAXELEMSIZE];
+	proc PROC[MAXPROCSIZE];
+
+	int STMT_LEN;
+	stmt STMT[MAXSTMTSIZE];
 } prog;
+
+extern char *statementcode_to_str(const stmt_kind CODE);
 
 static void update_token();
 
@@ -50,13 +75,13 @@ extern int parse_program();
 
 static int read_block();
 
-static var var_tmp[MAXELEMSIZE];
+static var var_tmp[MAXVARSIZE];
 static int var_tmp_len;
 static int is_variable_declaration();
 static int read_variable_declaration();
 static void store_variable_declaration();
 
-static char varname_tmp[MAXELEMSIZE][MAXSTRSIZE];
+static char varname_tmp[MAXVARSIZE][MAXSTRSIZE];
 static int varname_tmp_len;
 static int is_variable_names();
 static int read_variable_names();
@@ -84,6 +109,11 @@ static int read_procedure_name();
 
 static int is_formal_parameters();
 static int read_formal_parameters();
+
+static stmt stmt_tmp[MAXSTMTSIZE];
+static int stmt_tmp_len;
+static int read_toplevel_statement();
+static void store_toplevel_statement();
 
 static int is_compound_statement();
 static int read_compound_statement();

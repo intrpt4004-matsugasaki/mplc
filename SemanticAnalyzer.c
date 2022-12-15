@@ -1,6 +1,15 @@
 #include "SemanticAnalyzer.h"
 
 extern int semantic_analyze() {
+	_dump();
+
+	return 0;
+}
+
+static void print_xref_table() {
+}
+
+static void _dump() {
 	printf("program %s\n", program.NAME);
 
 	for (int i = 0; i < program.VAR_LEN; i++) {
@@ -14,6 +23,9 @@ extern int semantic_analyze() {
 				program.VAR[i].ARR_NUM
 			);
 	}
+
+	for (int j = 0; j < program.STMT_LEN; j++)
+		printf("   %3d: %s\n", j, statementcode_to_str(program.STMT[j].KIND));
 
 	for (int i = 0; i < program.PROC_LEN; i++) {
 		printf("%3d: procedure %s(", i, program.PROC[i].NAME);
@@ -34,7 +46,8 @@ extern int semantic_analyze() {
 				program.PROC[i].VAR[j].NAME
 			);
 		}
-	}
 
-	return 0;
+		for (int j = 0; j < program.PROC[i].STMT_LEN; j++)
+			printf("   %3d: %s\n", j, statementcode_to_str(program.PROC[i].STMT[j].KIND));
+	}
 }
