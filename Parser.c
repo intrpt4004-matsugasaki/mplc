@@ -1,8 +1,6 @@
 #include "Parser.h"
 
 static int token;
-program prog;
-
 static void update_token() {
 	token = scan();
 }
@@ -26,15 +24,20 @@ static int read(const int TOKEN_CODE) {
 	return (match)? NORMAL : ERROR; // {redundant}
 }
 
+prog program;
 extern int parse_program() {
+	// init program
+	program.VAR_LEN = 0;
+
 	update_token();
-	prog.VAR_LEN = 0;
 
 	if (!read(TPROGRAM)) {
 		return error("'program' is not found.");
 	}
 
-	strcpy(prog.NAME, string_attr);
+	// string_attr -> program.NAME
+	strcpy(program.NAME, string_attr);
+
 	if (!read(TNAME)) {
 		return error("program name is not found.");
 	}
@@ -59,21 +62,14 @@ static int read_block() {
 		if (is_variable_declaration()) {
 			if (!read_variable_declaration())
 				return error("read_variable_declaration failed.");
-
-			for (int i = 0; i < vars_len - 1; i++) {
-				strcpy(prog.VAR[prog.VAR_LEN + i].NAME, vars[i].NAME);
-				prog.VAR[prog.VAR_LEN + i].TYPE = vars[i].TYPE;
-				if (vars[i].TYPE == TARRAY) {
-					prog.VAR[prog.VAR_LEN + i].ARR_TYPE = vars[vars_len + i].ARR_TYPE;
-					prog.VAR[prog.VAR_LEN + i].ARR_NUM = vars[vars_len + i].ARR_NUM;
-				}
-			}
-			prog.VAR_LEN += vars_len;
+			store_variable_declaration();
 		}
 
-		if (is_subprogram_declaration())
+		if (is_subprogram_declaration()) {
 			if (!read_subprogram_declaration())
 				return error("read_subprogram_declaration failed.");
+			store_subprogram_declaration();
+		}
 	}
 
 	if (!read_compound_statement())
@@ -86,10 +82,12 @@ static int is_variable_declaration() {
 	return is(TVAR);
 }
 
-static var vars[MAXELEMSIZE];
-static int vars_len;
+static var var_tmp[MAXELEMSIZE];
+static int var_tmp_len;
 static int read_variable_declaration() {
-	vars_len = 0;
+	// init var_tmp
+	var_tmp_len = 0;
+	memset(var_tmp, 0, sizeof(var_tmp));
 
 	if (!read(TVAR))
 		return error("'var' is not found.");
@@ -106,15 +104,22 @@ static int read_variable_declaration() {
 	if (!read(TSEMI))
 		return error("';' is not found.");
 
-	for (int i = 0; i < var_name_len; i++) {
-		strcpy(vars[vars_len + i].NAME, var_name[i]);
-		vars[vars_len + i].TYPE = var_type;
-		if (var_type == TARRAY) {
-			vars[vars_len + i].ARR_TYPE = var_arr_type;
-			vars[vars_len + i].ARR_NUM = var_arr_num;
+	// varname_tmp -> var_tmp[]
+	for (int i = 0; i < varname_tmp_len; i++) {
+		strcpy(var_tmp[i].NAME	, varname_tmp[i]);
+
+		var_tmp[i].TYPE			= type_tmp;
+
+		if (type_tmp == TARRAY) {
+			var_tmp[i].ARR_TYPE	= arr_type_tmp;
+			var_tmp[i].ARR_NUM	= arr_num_tmp;
+
+		} else {
+			var_tmp[i].ARR_TYPE	= 0;
+			var_tmp[i].ARR_NUM	= 0;
 		}
 	}
-	vars_len += var_name_len + 1;
+	var_tmp_len = varname_tmp_len;
 
 	while (is_variable_names()) {
 		if (!read_variable_names())
@@ -129,30 +134,51 @@ static int read_variable_declaration() {
 		if (!read(TSEMI))
 			return error("';' is not found.");
 
-		for (int i = 0; i < var_name_len; i++) {
-			strcpy(vars[vars_len + i].NAME, var_name[i]);
-			vars[vars_len + i].TYPE = var_type;
-			if (var_type == TARRAY) {
-				vars[vars_len + i].ARR_TYPE = var_arr_type;
-				vars[vars_len + i].ARR_NUM = var_arr_num;
+		// varname_tmp -> var_tmp[]
+		for (int i = 0; i < varname_tmp_len; i++) {
+			strcpy(var_tmp[var_tmp_len + i].NAME	, varname_tmp[i]);
+
+			var_tmp[var_tmp_len + i].TYPE			= type_tmp;
+
+			if (type_tmp == TARRAY) {
+				var_tmp[var_tmp_len + i].ARR_TYPE	= arr_type_tmp;
+				var_tmp[var_tmp_len + i].ARR_NUM	= arr_num_tmp;
+
+			} else {
+				var_tmp[var_tmp_len + i].ARR_TYPE	= 0;
+				var_tmp[var_tmp_len + i].ARR_NUM	= 0;
 			}
 		}
-		vars_len += var_name_len + 1;
+		var_tmp_len += varname_tmp_len;
 	}
 
 	return NORMAL;
+}
+
+static void store_variable_declaration() {
+	// var_tmp -> program.VAR+
+	for (int i = 0; i < var_tmp_len; i++) {
+		strcpy(program.VAR[program.VAR_LEN + i].NAME	, var_tmp[i].NAME);
+
+		program.VAR[program.VAR_LEN + i].TYPE			= var_tmp[i].TYPE;
+		program.VAR[program.VAR_LEN + i].ARR_TYPE		= var_tmp[i].ARR_TYPE;
+		program.VAR[program.VAR_LEN + i].ARR_NUM		= var_tmp[i].ARR_NUM;
+	}
+
+	prog.VAR_LEN += var_tmp_len;
 }
 
 static int is_variable_names() {
 	return is_variable_name();
 }
 
-static char var_name[MAXELEMSIZE][MAXSTRSIZE];
-static int var_name_len;
+static char varname_tmp[MAXELEMSIZE][MAXSTRSIZE];
+static int varname_tmp_len;
 static int read_variable_names() {
-	var_name_len = 0;
+	// init var_name_tmp
+	varname_tmp_len = 0;
+	memset(varname_tmp, 0, sizeof(varname_tmp));
 
-	strcpy(var_name[var_name_len++], string_attr);
 	if (!read_variable_name())
 		return error("read_variable_name failed.");
 
@@ -160,7 +186,6 @@ static int read_variable_names() {
 		if (!read(TCOMMA))
 			return error("',' is not found.");
 
-		strcpy(var_name[var_name_len++], string_attr);
 		if (!read_variable_name())
 			return error("read_variable_name failed.");
 	}
@@ -173,13 +198,17 @@ static int is_variable_name() {
 }
 
 static int read_variable_name() {
+	// 	string_attr -> varname_tmp[]
+	strcpy(varname_tmp[varname_tmp_len++], string_attr);
+
 	if (!read(TNAME))
 		return error("variable name is not found.");
 }
 
-static int var_type;
+static int type_tmp;
 static int read_type() {
-	var_type = token;
+	// init type_tmp
+	type_tmp = 0;
 
 	if (is_standard_type()) {
 		if (!read_standard_type())
@@ -201,6 +230,9 @@ static int is_standard_type() {
 }
 
 static int read_standard_type() {
+	// token -> type_tmp
+	type_tmp = token;
+
 	if (is(TINTEGER)) {
 		if (!read(TINTEGER))
 			return error("{unreachable}");
@@ -226,16 +258,25 @@ static int is_array_type() {
 	return is(TARRAY);
 }
 
-static int var_arr_num;
-static int var_arr_type;
+static int arr_num_tmp;
+static int arr_type_tmp;
 static int read_array_type() {
+	// init arr_num_tmp, arr_type_tmp
+	arr_num_tmp = 0;
+	arr_type_tmp = 0;
+
+	// token -> type_tmp
+	type_tmp = token;
+
 	if (!read(TARRAY))
 		return error("'array' is not found.");
 
 	if (!read(TLSQPAREN))
 		return error("'[' is not found.");
 
-	var_arr_num = num_attr;
+	// num_attr -> arr_num_tmp
+	arr_num_tmp = num_attr;
+
 	if (!read(TNUMBER))
 		return error("number is not found.");
 
@@ -245,7 +286,9 @@ static int read_array_type() {
 	if (!read(TOF))
 		return error("'of' is not found.");
 
-	var_arr_type = token;
+	// token -> arr_type_tmp
+	arr_type_tmp = token;
+
 	if (!read_standard_type())
 		return error("read_standard_type failed.");
 
@@ -256,7 +299,14 @@ static int is_subprogram_declaration() {
 	return is(TPROCEDURE);
 }
 
+static proc proc_tmp;
 static int read_subprogram_declaration() {
+	// init proc_tmp
+	proc_tmp.PARAM_LEN = 0;
+	memset(proc_tmp.PARAM, 0, sizeof(proc_tmp.PARAM));
+	proc_tmp.VAR_LEN = 0;
+	memset(proc_tmp.VAR, 0, sizeof(proc_tmp.VAR));
+
 	if (!read(TPROCEDURE))
 		return error("'procedure' not found.");
 
@@ -274,6 +324,20 @@ static int read_subprogram_declaration() {
 		if (!read_variable_declaration())
 			return error("read_variable_declaration failed.");
 
+	// var_tmp -> proc_tmp.VAR
+	for (int i = 0; i < var_tmp_len; i++) {
+		strcpy(program.VAR[program.VAR_LEN + i].NAME	, var_tmp[i].NAME);
+
+		prog.VAR[prog.VAR_LEN + i].TYPE					= var_tmp[i].TYPE;
+		prog.VAR[prog.VAR_LEN + i].ARR_TYPE				= var_tmp[i].ARR_TYPE;
+		prog.VAR[prog.VAR_LEN + i].ARR_NUM				= var_tmp[i].ARR_NUM;
+	}
+
+	prog.VAR_LEN += var_tmp_len;
+
+	}
+	proc_tmp.VAR_LEN = var_tmp_len;
+
 	if (!read_compound_statement())
 		return error("read_compound_statement failed.");
 
@@ -283,7 +347,40 @@ static int read_subprogram_declaration() {
 	return NORMAL;
 }
 
+static void store_subprogram_declaration() {
+	// proc_tmp -> program.PROC[]
+	const int this = program.PROC_LEN;
+
+	// proc_tmp.NAME -> program.PROC[].NAME
+	strcpy(program.PROC[this].NAME, proc_tmp.NAME);
+
+	// proc_tmp.PARAM -> program.PROC[].PARAM
+	program.PROC[this].PARAM_LEN = proc_tmp.PARAM_LEN;
+	for (int i = 0; i < proc_tmp.PARAM_LEN; i++) {
+		strcpy(program.PROC[this].PARAM[i].NAME	, proc_tmp.PARAM[i].NAME);
+
+		program.PROC[this].PARAM[i].TYPE		= proc_tmp.PARAM[i].TYPE;
+		program.PROC[this].PARAM[i].ARR_TYPE	= proc_tmp.PARAM[i].ARR_TYPE;
+		program.PROC[this].PARAM[i].ARR_NUM		= proc_tmp.PARAM[i].ARR_NUM;
+	}
+
+	// proc_tmp.VAR -> program.PROC[].VAR
+	program.PROC[this].VAR_LEN = proc_tmp.VAR_LEN;
+	for (int i = 0; i < proc_tmp.VAR_LEN; i++) {
+		strcpy(program.PROC[this].VAR[i].NAME	, proc_tmp.VAR[i].NAME);
+
+		program.PROC[this].VAR[i].TYPE			= proc_tmp.VAR[i].TYPE;
+		program.PROC[this].VAR[i].ARR_TYPE		= proc_tmp.VAR[i].ARR_TYPE;
+		program.PROC[this].VAR[i].ARR_NUM		= proc_tmp.VAR[i].ARR_NUM;
+	}
+
+	program.PROC_LEN++;
+}
+
 static int read_procedure_name() {
+	// string_attr -> proc_tmp.NAME
+	strcpy(proc_tmp.NAME, string_attr);
+
 	if (!read(TNAME))
 		return error("procedure name is not found.");
 	
@@ -307,12 +404,46 @@ static int read_formal_parameters() {
 	if (!read_type())
 		return error("read_type failed.");
 
+	// varname_tmp -> proc_tmp.PARAM
+	for (int i = 0; i < varname_tmp_len; i++) {
+		strcpy(proc_tmp.PARAM[i].NAME	, varname_tmp[i]);
+
+		proc_tmp.PARAM[i].TYPE			= type_tmp;
+
+		if (type_tmp == TARRAY) {
+			proc_tmp.PARAM[i].ARR_TYPE	= arr_type_tmp;
+			proc_tmp.PARAM[i].ARR_NUM	= arr_num_tmp;
+
+		} else {
+			proc_tmp.PARAM[i].ARR_TYPE	= 0;
+			proc_tmp.PARAM[i].ARR_NUM	= 0;
+		}
+	}
+	proc_tmp.PARAM_LEN = varname_tmp_len;
+
 	while (is(TSEMI)) {
 		if (!read(TSEMI))
 			return error("';' is not found.");
 
 		if (!read_variable_names())
 			return error("read_variable_names failed.");
+
+		// varname_tmp -> proc_tmp.PARAM
+		for (int i = 0; i < varname_tmp_len; i++) {
+			strcpy(proc_tmp.PARAM[proc_tmp.PARAM_LEN + i].NAME		, varname_tmp[i]);
+
+			proc_tmp.PARAM[proc_tmp.PARAM_LEN + i].TYPE				= type_tmp;
+
+			if (type_tmp == TARRAY) {
+				proc_tmp.PARAM[proc_tmp.PARAM_LEN + i].ARR_TYPE		= arr_type_tmp;
+				proc_tmp.PARAM[proc_tmp.PARAM_LEN + i].ARR_NUM		= arr_num_tmp;
+
+			} else {
+				proc_tmp.PARAM[proc_tmp.PARAM_LEN + i].ARR_TYPE		= 0;
+				proc_tmp.PARAM[proc_tmp.PARAM_LEN + i].ARR_NUM		= 0;
+			}
+		}
+		proc_tmp.PARAM_LEN += varname_tmp_len;
 
 		if (!read(TCOLON))
 			return error("':' is not found.");

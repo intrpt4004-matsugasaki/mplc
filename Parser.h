@@ -16,6 +16,9 @@ typedef struct {
 typedef struct {
 	char NAME[MAXSTRSIZE];
 
+	int PARAM_LEN;
+	var PARAM[MAXELEMSIZE];
+
 	int VAR_LEN;
 	var VAR[MAXELEMSIZE];
 } proc;
@@ -28,9 +31,7 @@ typedef struct {
 
 	int PROC_LEN;
 	proc PROC[MAXELEMSIZE];
-} program;
-
-extern program prog;
+} prog;
 
 static void update_token();
 
@@ -44,36 +45,40 @@ static int error(char *message);
 static int is(const int TOKEN_CODE);
 static int read(const int TOKEN_CODE);
 
+extern prog program;
 extern int parse_program();
 
 static int read_block();
 
-static var vars[MAXELEMSIZE];
-static int vars_len;
+static var var_tmp[MAXELEMSIZE];
+static int var_tmp_len;
 static int is_variable_declaration();
 static int read_variable_declaration();
+static void store_variable_declaration();
 
+static char varname_tmp[MAXELEMSIZE][MAXSTRSIZE];
+static int varname_tmp_len;
 static int is_variable_names();
 static int read_variable_names();
 
-static char var_name[MAXELEMSIZE][MAXSTRSIZE];
-static int var_name_len;
 static int is_variable_name();
 static int read_variable_name();
 
-static int var_type;
+static int type_tmp;
 static int read_type();
 
 static int is_standard_type();
 static int read_standard_type();
 
-static int var_arr_num;
-static int var_arr_type;
+static int arr_num_tmp;
+static int arr_type_tmp;
 static int is_array_type();
 static int read_array_type();
 
+static proc proc_tmp;
 static int is_subprogram_declaration();
 static int read_subprogram_declaration();
+static void store_subprogram_declaration();
 
 static int read_procedure_name();
 

@@ -649,7 +649,7 @@ static void read_num() {
 	if (!is_num()) return;
 
 	num_attr *= 10;
-	num_attr += (int)(c[0]);
+	num_attr += c[0] - '0';
 	update_char();
 	read_num();
 }

@@ -14,6 +14,7 @@
 #include "Scanner.h"
 #include "Parser.h"
 #include "SemanticAnalyzer.h"
+//#include "CodeGenerator.h"
 
 int main(const int argc, char *argv[]) {
 	if (argc < 2) {
@@ -30,13 +31,19 @@ int main(const int argc, char *argv[]) {
 
 	if (parse_program() == ERROR) {
 		/* ERROR */
-		printf("[ERROR] Compiler: Parse failed.\n");
+		printf("[ERROR] Compiler: Syntax parsing failed.\n");
 		exit(-1);
 	}
 
 	if (semantic_analyze() < 0) {
 		/* ERROR */
-		printf("[ERROR] Compiler: Semantic analyze failed.\n");
+		printf("[ERROR] Compiler: Semantic analysis failed.\n");
 		exit(-1);
 	}
+
+	/*if (generate_code("a.out") < 0) {
+		*//* ERROR *//*
+		printf("[ERROR] Compiler: Code generation failed.\n");
+		exit(-1);
+	}*/
 }
