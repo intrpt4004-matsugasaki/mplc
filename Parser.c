@@ -164,8 +164,11 @@ static void store_variable_declaration() {
 		program.VAR[program.VAR_LEN + i].ARR_TYPE		= var_tmp[i].ARR_TYPE;
 		program.VAR[program.VAR_LEN + i].ARR_NUM		= var_tmp[i].ARR_NUM;
 	}
+	program.VAR_LEN += var_tmp_len;
 
-	prog.VAR_LEN += var_tmp_len;
+	// init var_tmp
+	var_tmp_len = 0;
+	memset(var_tmp, 0, sizeof(var_tmp));
 }
 
 static int is_variable_names() {
@@ -266,7 +269,7 @@ static int read_array_type() {
 	arr_type_tmp = 0;
 
 	// token -> type_tmp
-	type_tmp = token;
+	int type_tmp_tmp = token;
 
 	if (!read(TARRAY))
 		return error("'array' is not found.");
@@ -286,11 +289,12 @@ static int read_array_type() {
 	if (!read(TOF))
 		return error("'of' is not found.");
 
-	// token -> arr_type_tmp
-	arr_type_tmp = token;
-
 	if (!read_standard_type())
 		return error("read_standard_type failed.");
+
+	// type_tmp -> arr_type_tmp
+	arr_type_tmp = type_tmp;
+	type_tmp = type_tmp_tmp;
 
 	return NORMAL;
 }
@@ -326,15 +330,11 @@ static int read_subprogram_declaration() {
 
 	// var_tmp -> proc_tmp.VAR
 	for (int i = 0; i < var_tmp_len; i++) {
-		strcpy(program.VAR[program.VAR_LEN + i].NAME	, var_tmp[i].NAME);
+		strcpy(proc_tmp.VAR[i].NAME	, var_tmp[i].NAME);
 
-		prog.VAR[prog.VAR_LEN + i].TYPE					= var_tmp[i].TYPE;
-		prog.VAR[prog.VAR_LEN + i].ARR_TYPE				= var_tmp[i].ARR_TYPE;
-		prog.VAR[prog.VAR_LEN + i].ARR_NUM				= var_tmp[i].ARR_NUM;
-	}
-
-	prog.VAR_LEN += var_tmp_len;
-
+		proc_tmp.VAR[i].TYPE		= var_tmp[i].TYPE;
+		proc_tmp.VAR[i].ARR_TYPE	= var_tmp[i].ARR_TYPE;
+		proc_tmp.VAR[i].ARR_NUM		= var_tmp[i].ARR_NUM;
 	}
 	proc_tmp.VAR_LEN = var_tmp_len;
 
@@ -375,6 +375,11 @@ static void store_subprogram_declaration() {
 	}
 
 	program.PROC_LEN++;
+
+
+	// init var_tmp
+	var_tmp_len = 0;
+	memset(var_tmp, 0, sizeof(var_tmp));
 }
 
 static int read_procedure_name() {
