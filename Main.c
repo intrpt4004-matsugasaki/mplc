@@ -29,7 +29,7 @@ int main(const int argc, char *argv[]) {
 		exit(-1);
 	}
 
-	program p = parse_program();
+	program_t p = parse_program();
 	semantic_analyze(p);
 
 	/*

@@ -10,7 +10,7 @@ static void print_xref_table() {
 }
 
 static void _dump() {
-	printf("program %s\n", program.NAME);
+/*	printf("program %s\n", program.NAME);
 
 	for (int i = 0; i < program.VAR_LEN; i++) {
 		if (program.VAR[i].TYPE != TARRAY)
@@ -50,4 +50,4 @@ static void _dump() {
 		for (int j = 0; j < program.PROC[i].STMT_LEN; j++)
 			printf("   %3d: %s\n", j, statementcode_to_str(program.PROC[i].STMT[j].KIND));
 	}
-}
+*/}

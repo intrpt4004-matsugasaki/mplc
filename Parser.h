@@ -13,14 +13,14 @@ typedef struct {
 static void update_token();
 
 static int is(const int TOKEN_CODE);
-static void read(const int TOKEN_CODE, char *err_message);
+static void read(const int TOKEN_CODE, char *error_message);
 static void error(char *message);
 /* ------------------------------------------------------------------------------------ */
 
 /* --- variable ----------------------------------------------------------------------- */
-enum standard_type_t {
+typedef enum {
 	INTEGER, BOOLEAN, CHAR
-};
+} standard_type_t;
 
 typedef struct {
 	standard_type_t elem_type;
@@ -47,10 +47,10 @@ static int is_variable_names();
 static variable_t *read_variable_names();
 
 static int is_standard_type();
-static std_type_t read_standard_type();
+static standard_type_t read_standard_type();
 
 static int is_array_type();
-static arr_type_t read_array_type();
+static array_type_t read_array_type();
 
 static type_t read_type();
 
@@ -59,6 +59,8 @@ static variable_t *read_variable_declaration();
 /* ------------------------------------------------------------------------------------ */
 
 /* --- procedure ---------------------------------------------------------------------- */
+typedef struct statement_t;
+
 typedef struct {
 	char name[MAXSTRSIZE];
 	variable_t *param;
@@ -82,36 +84,86 @@ typedef struct statement_t {
 	struct statement_t *next;
 } statement_t;
 
+typedef struct {
+	char name[MAXSTRSIZE];
+
+	int is_array;
+	unsigned int index;
+} target_variable_t;
+
+typedef struct {} expression_t;
+
+typedef struct {
+	statement_t base;
+
+	target_variable_t target;
+	expression_t expr;
+} assignment_statement_t;
+
+typedef struct {
+	statement_t base;
+
+	expression_t branch_cond;
+	statement_t *then_stmt;
+
+	int has_else_stmt;
+	statement_t *else_stmt;
+} condition_statement_t;
+
+typedef struct {
+	statement_t base;
+
+	expression_t loop_cond;
+	statement_t *loop_stmt;
+} iteration_statement_t;
+
+typedef struct expressions_t;
+
+typedef struct {
+	statement_t base;
+
+	char name[MAXSTRSIZE];
+	expressions_t exprs;
+} call_statement_t;
+
+typedef struct {
+	statement_t base;
+} input_statement_t;
+
+typedef struct {
+	statement_t base;
+} output_statement_t;
+
 static int is_assignment_statement();
-static int read_assignment_statement();
+static assignment_statement_t *read_assignment_statement();
 
 static int is_condition_statement();
-static int read_condition_statement();
+static condition_statement_t *read_condition_statement();
 
 static int is_iteration_statement();
-static int read_iteration_statement();
+static iteration_statement_t *read_iteration_statement();
 
 static int is_exit_statement();
-static int read_exit_statement();
+static void read_exit_statement();
 
 static int is_call_statement();
-static int read_call_statement();
+static call_statement_t read_call_statement();
 
 static int is_return_statement();
-static int read_return_statement();
+static void read_return_statement();
 
 static int is_input_statement();
-static int read_input_statement();
+static input_statement_t *read_input_statement();
 
 static int is_output_statement();
-static int read_output_statement();
+static output_statement_t *read_output_statement();
 
-static int read_empty_statement();
+static void read_empty_statement();
 
-static int read_statement();
+static statement_t *read_statement();
 
 static int is_compound_statement();
-static int read_compound_statement();
+static statement_t *read_compound_statement();
 /* ------------------------------------------------------------------------------------ */
 
 /* --- program ------------------------------------------------------------------------ */
@@ -164,5 +216,10 @@ static int is_relational_operator();
 static int read_relational_operator();
 
 static int read_output_format();
+
+enum {
+	NORMAL = 0,
+	ERROR
+};
 
 #endif

@@ -13,7 +13,7 @@ static int is(const int TOKEN_CODE) {
 	return (token.CODE == TOKEN_CODE);
 }
 
-static void read(const int TOKEN_CODE, char err_message) {
+static void read(const int TOKEN_CODE, char *error_message) {
 	if (!is(TOKEN_CODE))
 		error(err_message);
 
@@ -439,15 +439,12 @@ extern program_t parse_program() {
 
 
 static int read_expressions() {
-	if (!read_expression())
-		return error("read_expression failed.");
+	read_expression();
 
 	while (is(TCOMMA)) {
-		if (!read(TCOMMA))
-			return error("',' is not found.");
+		read(TCOMMA, "',' is not found.");
 
-		if (!read_expression())
-			return error("read_expression failed.");
+		read_expression();
 	}
 
 	return NORMAL;
@@ -458,10 +455,7 @@ static int is_return_statement() {
 }
 
 static int read_return_statement() {
-	stmt_tmp[stmt_tmp_len++].KIND = SRET;
-
-	if (!read(TRETURN))
-		return error("'return' is not found.");
+	read(TRETURN, "'return' is not found.");
 
 	return NORMAL;
 }
@@ -471,16 +465,11 @@ static int is_assignment_statement() {
 }
 
 static int read_assignment_statement() {
-	stmt_tmp[stmt_tmp_len++].KIND = SASSN;
+	read_left_part();
 
-	if (!read_left_part())
-		return error("read_left_part failed.");
+	read(TASSIGN, "':=' is not found.");
 
-	if (!read(TASSIGN))
-		return error("':=' is not found.");
-
-	if (!read_expression())
-		return error("read_expression failed.");
+	read_expression();
 
 	return NORMAL;
 }
@@ -490,8 +479,7 @@ static int is_left_part() {
 }
 
 static int read_left_part() {
-	if (!read_variable())
-		return error("read_variable failed.");
+	read_variable();
 
 	return NORMAL;
 }
@@ -501,18 +489,14 @@ static int is_variable() {
 }
 
 static int read_variable() {
-	if (!read_variable_name())
-		return error("read_variable_name failed.");		
+	read_variable_name();
 
 	if (is(TLSQPAREN)) {
-		if (!read(TLSQPAREN))
-			return error("'[' is not found.");		
+		read(TLSQPAREN, "'[' is not found.");
 
-		if (!read_expressions())
-			return error("read_expressions failed.");		
+		read_expressions();
 
-		if (!read(TRSQPAREN))
-			return error("']' is not found.");
+		read(TRSQPAREN, "']' is not found.");
 	}
 
 	return NORMAL;
@@ -523,15 +507,12 @@ static int is_expression() {
 }
 
 static int read_expression() {
-	if (!read_simple_expression())
-		return error("read_simple_expression failed.");		
+	read_simple_expression();
 
 	while (is_relational_operator()) {
-		if (!read_relational_operator())
-			return error("read_relational_operator failed.");		
+		read_relational_operator();
 
-		if (!read_simple_expression())
-			return error("read_simple_expression failed.");
+		read_simple_expression();
 	}
 
 	return NORMAL;
@@ -543,22 +524,17 @@ static int is_simple_expression() {
 
 static int read_simple_expression() {
 	if (is(TPLUS))
-		if (!read(TPLUS))
-			return error("'+' is not found.");		
+		read(TPLUS, "'+' is not found.");		
 
 	if (is(TMINUS))
-		if (!read(TMINUS))
-			return error("'-' is not found.");		
+		read(TMINUS, "'-' is not found.");		
 
-	if (!read_term())
-		return error("read_term failed.");		
+	read_term();
 
 	while (is_additive_operator()) {
-		if (!read_additive_operator())
-			return error("read_additive_operator failed.");
+		read_additive_operator();
 
-		if (!read_term())
-			return error("read_term failed.");
+		read_term();
 	}
 
 	return NORMAL;
@@ -569,15 +545,12 @@ static int is_term() {
 }
 
 static int read_term() {
-	if (!read_factor())
-		return error("read_factor failed.");
+	read_factor();
 
 	while (is_multiplicative_operator()) {
-		if (!read_multiplicative_operator())
-			return error("read_multiplicative_operator failed.");		
+		read_multiplicative_operator();
 
-		if (!read_factor())
-			return error("read_factor failed.");		
+		read_factor();
 	}
 
 	return NORMAL;
@@ -589,52 +562,41 @@ static int is_factor() {
 }
 
 static int read_factor() {
-	if (is_variable())
-		if (!read_variable())
-			return error("read_variable failed.");		
-		else
-			return NORMAL;
+	if (is_variable()) {
+		read_variable();
+		return NORMAL;
+	}
 
-	if (is_constant())
-		if (!read_constant())
-			return error("read_constant failed.");		
-		else
-			return NORMAL;
+	if (is_constant()) {
+		read_constant();
+		return NORMAL;
+	}
 
 	if (is(TLPAREN)) {
-		if (!read(TLPAREN))
-			return error("'(' is not found.");		
-		if (!read_expression())
-			return error("read_expression failed.");
-		if (!read(TRPAREN))
-			return error("')' is not found.");
-		else
-			return NORMAL;
+		read(TLPAREN, "'(' is not found.");		
+		read_expression();
+		read(TRPAREN, "')' is not found.");
+		return NORMAL;
 	}
 
 	if (is(TNOT)) {
-		if (!read(TNOT))
-			return error("'not' is not found.");		
-		if (!read_factor())
-			return error("read_factor failed.");		
-		else
-			return NORMAL;
+		read(TNOT, "'not' is not found.");		
+		read_factor();
+		return NORMAL;
 	}
 
 	if (is_standard_type()) {
-		if (!read_standard_type())
-			return error("read_standard_type failed.");		
-		if (!read(TLPAREN))
-			return error("'(' is not found.");		
-		if (!read_expression())
-			return error("read_expression failed.");
-		if (!read(TRPAREN))
-			return error("')' is not found.");
-		else
-			return NORMAL;
+		read_standard_type();
+
+		read(TLPAREN, "'(' is not found.");		
+
+		read_expression();
+
+		read(TRPAREN, "')' is not found.");
+		return NORMAL;
 	}
 
-	return error("unmachted on read_factor.");
+	error("unmachted on read_factor.");
 }
 
 static int is_constant() {
@@ -642,31 +604,27 @@ static int is_constant() {
 }
 
 static int read_constant() {
-	if (is(TNUMBER))
-		if (!read(TNUMBER))
-			return error("number is not found.");
-		else
-			return NORMAL;
+	if (is(TNUMBER)) {
+		read(TNUMBER, "number is not found.");
+		return NORMAL;
+	}
 
-	if (is(TFALSE))
-		if (!read(TFALSE))
-			return error("'false' is not found.");
-		else
-			return NORMAL;
+	if (is(TFALSE)) {
+		read(TFALSE, "'false' is not found.");
+		return NORMAL;
+	}
 
-	if (is(TTRUE))
-		if (!read(TTRUE))
-			return error("'true' is not found.");
-		else
-			return NORMAL;
+	if (is(TTRUE)) {
+		read(TTRUE, "'true' is not found.");
+		return NORMAL;
+	}
 
-	if (is(TSTRING))
-		if (!read(TSTRING))
-			return error("string is not found.");
-		else
-			return NORMAL;
+	if (is(TSTRING)) {
+		read(TSTRING, "string is not found.");
+		return NORMAL;
+	}
 
-	return error("unmachted on read_constant.");
+	error("unmachted on read_constant.");
 }
 
 static int is_multiplicative_operator() {
@@ -675,24 +633,21 @@ static int is_multiplicative_operator() {
 
 static int read_multiplicative_operator() {
 	if (is(TSTAR)) {
-		if (!read(TSTAR))
-			return error("'*' is not found.");
+		read(TSTAR, "'*' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TDIV)) {
-		if (!read(TDIV))
-			return error("'div' is not found.");
+		read(TDIV, "'div' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TAND)) {
-		if (!read(TAND))
-			return error("'and' is not found.");
+		read(TAND, "'and' is not found.");
 		return NORMAL;
 	}
 
-	return error("unmatched on read_multiplicative_operator.");	
+	error("unmatched on read_multiplicative_operator.");	
 }
 
 static int is_additive_operator() {
@@ -701,24 +656,21 @@ static int is_additive_operator() {
 
 static int read_additive_operator() {
 	if (is(TPLUS)) {
-		if (!read(TPLUS))
-			return error("'+' is not found.");
+		read(TPLUS, "'+' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TMINUS)) {
-		if (!read(TMINUS))
-			return error("'-' is not found.");
+		read(TMINUS, "'-' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TOR)) {
-		if (!read(TOR))
-			return error("'or' is not found.");
+		read(TOR, "'or' is not found.");
 		return NORMAL;
 	}
 
-	return error("unmatched on read_additive_operator.");	
+	error("unmatched on read_additive_operator.");	
 }
 
 static int is_relational_operator() {
@@ -729,42 +681,36 @@ static int is_relational_operator() {
 
 static int read_relational_operator() {
 	if (is(TEQUAL)) {
-		if (!read(TEQUAL))
-			return error("'=' is not found.");
+		read(TEQUAL, "'=' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TNOTEQ)) {
-		if (!read(TNOTEQ))
-			return error("'<>' is not found.");
+		read(TNOTEQ, "'<>' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TLE)) {
-		if (!read(TLE))
-			return error("'<' is not found.");
+		read(TLE, "'<' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TLEEQ)) {
-		if (!read(TLEEQ))
-			return error("'<=' is not found.");
+		read(TLEEQ, "'<=' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TGR)) {
-		if (!read(TGR))
-			return error("'>' is not found.");
+		read(TGR, "'>' is not found.");
 		return NORMAL;
 	}
 
 	if (is(TGREQ)) {
-		if (!read(TGREQ))
-			return error("'>=' is not found.");
+		read(TGREQ, "'>=' is not found.");
 		return NORMAL;
 	}
 
-	return error("unmatched on read_relational_operator.");
+	error("unmatched on read_relational_operator.");
 }
 
 static int is_input_statement() {
@@ -772,33 +718,26 @@ static int is_input_statement() {
 }
 
 static int read_input_statement() {
-	stmt_tmp[stmt_tmp_len++].KIND = SIN;
-
 	if (is(TREAD)) {
-		if (!read(TREAD))
-			return error("'read' is not found.");
+		read(TREAD, "'read' is not found.");
+
 	} else if (is(TREADLN)) {
-		if (!read(TREADLN))
-			return error("'readln' is not found.");
+		read(TREADLN, "'readln' is not found.");
+
 	} else
-		return error("unmatched on read_input_statement.");
+		error("unmatched on read_input_statement.");
 
 	if (is(TLPAREN)) {
-		if (!read(TLPAREN))
-			return error("'(' is not found.");
+		read(TLPAREN, "'(' is not found.");
 
-		if (!read_variable())
-			return error("read_variable failed.");
+		read_variable();
 
 		while (is(TCOMMA)) {
-			if (!read(TCOMMA))
-				return error("',' is not found.");
-			if (!read_variable())
-				return error("read_variable failed.");
+			read(TCOMMA, "',' is not found.");
+			read_variable();
 		}
 
-		if (!read(TRPAREN))
-			return error("')' is not found.");
+		read(TRPAREN, "')' is not found.");
 	}
 
 	return NORMAL;
@@ -809,33 +748,26 @@ static int is_output_statement() {
 }
 
 static int read_output_statement() {
-	stmt_tmp[stmt_tmp_len++].KIND = SOUT;
-
 	if (is(TWRITE)) {
-		if (!read(TWRITE))
-			return error("'write' is not found.");
+		read(TWRITE, "'write' is not found.");
+
 	} else if (is(TWRITELN)) {
-		if (!read(TWRITELN))
-			return error("'writeln' is not found.");
+		read(TWRITELN, "'writeln' is not found.");
+
 	} else
-		return error("unmatched on read_output_statement.");
+		error("unmatched on read_output_statement.");
 
 	if (is(TLPAREN)) {
-		if (!read(TLPAREN))
-			return error("'(' is not found.");
+		read(TLPAREN, "'(' is not found.");
 
-		if (!read_output_format())
-			return error("read_output_format failed.");
+		read_output_format();
 
 		while (is(TCOMMA)) {
-			if (!read(TCOMMA))
-				return error("',' is not found.");
-			if (!read_output_format())
-				return error("read_output_format failed.");
+			read(TCOMMA, "',' is not found.");
+			read_output_format();
 		}
 
-		if (!read(TRPAREN))
-			return error("')' is not found.");
+		read(TRPAREN, "')' is not found.");
 	}
 
 	return NORMAL;
@@ -843,25 +775,23 @@ static int read_output_statement() {
 
 static int read_output_format() {
 	if (is_expression()) {
-		if (!read_expression())
-			return error("read_expression failed.");
+		read_expression();
 
 		if (is(TCOLON)) {
-			if (!read(TCOLON))
-				return error("':' is not found.");
-			if (!read(TNUMBER))
-				return error("number is not found.");
+			read(TCOLON, "':' is not found.");
+			read(TNUMBER, "number is not found.");
 		}
 
-	} else if (is(TSTRING))
-		if (!read(TSTRING))
-			return error("string is not found.");
-	else
-		return error("unmatched on read_output_format.");
+	} else if (is(TSTRING)) {
+		read(TSTRING, "string is not found.");
+
+	} else {
+		error("unmatched on read_output_format.");
+	}
 
 	return NORMAL;
 }
 
-static int read_empty_statement() {
-	stmt_tmp[stmt_tmp_len++].KIND = SEMPTY;
+static void read_empty_statement() {
+	// {empty}
 }
