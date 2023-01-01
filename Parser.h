@@ -72,15 +72,15 @@ typedef struct statement_t {
 } statement_t;
 
 typedef struct {
+	int a; //
+} expression_t;
+
+typedef struct {
 	char name[MAXSTRSIZE];
 
 	int is_array;
-	unsigned int index;
+	expression_t index;
 } target_variable_t;
-
-typedef struct {
-	int a; //
-} expression_t;
 
 typedef struct {
 	statement_t base;
@@ -133,7 +133,7 @@ static target_variable_t read_left_part();
 
 
 
-static int read_expressions();
+static expressions_t read_expressions();
 
 static int is_expression();
 static expression_t read_expression();
@@ -181,7 +181,7 @@ static int is_exit_statement();
 static statement_t *read_exit_statement();
 
 static int is_call_statement();
-static call_statement_t read_call_statement();
+static call_statement_t *read_call_statement();
 
 static int is_return_statement();
 static statement_t *read_return_statement();

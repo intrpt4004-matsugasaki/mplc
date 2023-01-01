@@ -4,9 +4,8 @@
 #include "Scanner.h"
 #include "Parser.h"
 
-extern int semantic_analyze();
+extern void semantic_analyze();
 
 static void print_xref_table();
-static void _dump();
 
 #endif

@@ -185,7 +185,7 @@ static target_variable_t read_variable() {
 		read(TLSQPAREN, "'[' is not found.");
 
 		target.is_array = 1;
-		target.index = read_expressions();
+		target.index = read_expression();
 
 		read(TRSQPAREN, "']' is not found.");
 	}
@@ -206,7 +206,9 @@ static int is_assignment_statement() {
 }
 
 
-static int read_expressions() {
+static expressions_t read_expressions() {
+	expressions_t exprs;
+
 	read_expression();
 
 	while (is(TCOMMA)) {
@@ -215,7 +217,7 @@ static int read_expressions() {
 		read_expression();
 	}
 
-	return NORMAL;
+	return exprs;
 }
 
 static int is_expression() {
@@ -223,6 +225,8 @@ static int is_expression() {
 }
 
 static expression_t read_expression() {
+	expression_t expr;
+
 	read_simple_expression();
 
 	while (is_relational_operator()) {
@@ -231,7 +235,7 @@ static expression_t read_expression() {
 		read_simple_expression();
 	}
 
-	return NORMAL;
+	return expr;
 }
 
 static int is_simple_expression() {
@@ -644,7 +648,7 @@ static statement_t *read_statement() {
 		return read_exit_statement();
 
 	if (is_call_statement())
-		return read_call_statement();
+		return (statement_t *)(read_call_statement());
 
 	if (is_return_statement())
 		return read_return_statement();
