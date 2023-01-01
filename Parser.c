@@ -250,102 +250,117 @@ static int is_condition_statement() {
 	return is(TIF);
 }
 
-static int read_condition_statement() {
+static condition_statement_t *read_condition_statement() {
+	condition_statement_t *cond_stmt = malloc(sizeof(condition_statement_t));
+	cond_stmt->base.kind = CONDITION;
+	cond_stmt->base.next = NULL;
+
 	read(TIF, "'if' is not found.");
 
-	read_expression();
+	cond_stmt->branch_cond = read_expression();
 
 	read(TTHEN, "'then' is not found.");
 
-	read_statement();
+	cond_stmt->then_stmt = read_statement();
 
 	if (is(TELSE)) {
 		read(TELSE, "'else' is not found.");
 
-		read_statement();
+		cond_stmt->else_stmt = read_statement();
 	}
 
-	return NORMAL;
+	return cond_stmt;
 }
 
 static int is_iteration_statement() {
 	return is(TWHILE);
 }
 
-static int read_iteration_statement() {
+static iteration_statement_t *read_iteration_statement() {
+	iteration_statement_t *iter_stmt = malloc(sizeof(iteration_statement_t));
+	iter_stmt->base.kind = ITERATION;
+	iter_stmt->base.next = NULL;
+
 	read(TWHILE, "'while' is not found.");
 
-	read_expression();
+	iter_stmt->loop_cond = read_expression();
 
 	read(TDO, "'do' is not found.");
 
-	read_statement();
+	iter_stmt->loop_stmt = read_statement();
 
-	return NORMAL;
+	return iter_stmt;
 }
 
 static int is_exit_statement() {
 	return is(TBREAK);
 }
 
-static int read_exit_statement() {
+static statement_t *read_exit_statement() {
+	statement_t *stmt = malloc(sizeof(statement_t));
+	stmt->kind = EXIT;
+	stmt->next = NULL;
+
 	read(TBREAK, "'break' is not found.");
-	
-	return NORMAL;
+
+	return stmt;
 }
 
 static int is_call_statement() {
 	return is(TCALL);
 }
 
-static int read_call_statement() {
+static call_statement_t *read_call_statement() {
+	call_statement_t *call_stmt = malloc(sizeof(call_statement_t));
+	call_stmt->base.kind = CALL;
+	call_stmt->base.next = NULL;
+
 	read(TCALL, "'call' is not found.");
 
+	strcpy(call_stmt->name, token.STR);
 	read(TNAME, "callee procedure name not found.");
 
 	if (is(TLPAREN)) {
 		read(TLPAREN, "'(' is not found.");
 
-		read_expressions();
+		call_stmt->exprs = read_expressions();
 
 		read(TRPAREN, "')' is not found.");
 	}
 
-	return NORMAL;
+	return call_stmt;
 }
 
-static int read_statement() {
-	if (is_assignment_statement()) {
-		read_assignment_statement();
+static statement_t *read_statement() {
+	if (is_assignment_statement())
+		return read_assignment_statement();
 
-	} else if (is_condition_statement()) {
-		read_condition_statement();
+	if (is_condition_statement())
+		return read_condition_statement();
 
-	} else if (is_iteration_statement()) {
-		if (!read_iteration_statement())
+	if (is_iteration_statement())
+		return read_iteration_statement();
 
-	} else if (is_exit_statement()) {
-		if (!read_exit_statement())
+	if (is_exit_statement())
+		return read_exit_statement();
 
-	} else if (is_call_statement()) {
-		if (!read_call_statement())
+	if (is_call_statement())
+		return read_call_statement();
 
-	} else if (is_return_statement()) {
-		if (!read_return_statement())
+	if (is_return_statement())
+		return read_return_statement();
 
-	} else if (is_input_statement()) {
-		if (!read_input_statement())
+	if (is_input_statement())
+		return read_input_statement();
 
-	} else if (is_output_statement()) {
-		if (!read_output_statement())
+	if (is_output_statement())
+		return read_output_statement();
 
-	} else if (is_compound_statement()) {
-		if (!read_compound_statement())
+	if (is_compound_statement())
+		return read_compound_statement();
 
-	} else if (!read_empty_statement()) {
-	}
-
-	return NORMAL;
+	read_empty_statement();
+	return NULL;
 }
 
 
