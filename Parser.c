@@ -15,12 +15,12 @@ static int is(const int TOKEN_CODE) {
 
 static void read(const int TOKEN_CODE, char *error_message) {
 	if (!is(TOKEN_CODE))
-		error(err_message);
+		error(error_message);
 
 	update_token();
 }
 
-static int error(char *message) {
+static void error(char *message) {
 	printf("[ERROR] Parser: %s (at line %d)\n", message, get_linenum());
 	end_scan();
 
@@ -116,13 +116,13 @@ static type_t read_type() {
 	type_t type;
 
 	if (is_standard_type()) {
-		type.kind = STD;
+		type.kind = STANDARD;
 		type.standard = read_standard_type();
 		return type;
 	}
 
 	if (is_array_type()) {
-		type.kind = ARR;
+		type.kind = ARRAY;
 		type.array = read_array_type();
 		return type;
 	}
@@ -169,288 +169,41 @@ static variable_t *read_variable_declaration() {
 }
 /* ------------------------------------------------------------------------------------ */
 
-/* --- procedure ---------------------------------------------------------------------- */
-static procedure_t *read_procedure_name() {
-	procedure_t *procedure = malloc(sizeof(procedure_t));
-
-	strcpy(procedure->name, token.STR);
-	read(TNAME, "procedure name is not found.");
-
-	return procedure;
-}
-
-static int is_formal_parameters() {
-	return is(TLPAREN);
-}
-
-static variable_t *read_formal_parameters() {
-	variable_t *param;
-
-	read(TLPAREN, "'(' is not found.");
-
-	param = read_variable_names();
-
-	read(TCOLON, "':' is not found.");
-
-	type_t type = read_type();
-	variable_t *last = param;
-	for (; last->next != NULL; last = last->next) {
-		last->type = type;
-	}
-
-	while (is(TSEMI)) {
-		read(TSEMI, "';' is not found.");
-
-		last->next = read_variable_names();
-
-		read(TCOLON, "':' is not found.");
-
-		type = read_type();
-		last = last->next;
-		for (; last->next != NULL; last = last->next) {
-			last->type = type;
-		}
-	}
-
-	if (!read(TRPAREN))
-		return error("')' is not found.");
-
-	return param;
-}
-
-static int is_subprogram_declaration() {
-	return is(TPROCEDURE);
-}
-
-static procedure_t *read_subprogram_declaration() {
-	procedure_t *procedure;
-
-	read(TPROCEDURE, "'procedure' not found.");
-
-	procedure = read_procedure_name();
-
-	if (is_formal_parameters())
-		procedure->param = read_formal_parameters();
-
-	read(TSEMI, "';' is not found.");
-
-	if (is_variable_declaration())
-		procedure->var = read_variable_declaration();
-
-	procedure->stmt = read_compound_statement();
-
-	read(TSEMI, "';' is not found.");
-
-	return procedure;
-}
-/* ------------------------------------------------------------------------------------ */
-
 /* --- statement ---------------------------------------------------------------------- */
-static int is_condition_statement() {
-	return is(TIF);
+static int is_variable() {
+	return is_variable_name();
 }
 
-static condition_statement_t *read_condition_statement() {
-	condition_statement_t *cond_stmt = malloc(sizeof(condition_statement_t));
-	cond_stmt->base.kind = CONDITION;
-	cond_stmt->base.next = NULL;
+static target_variable_t read_variable() {
+	target_variable_t target;
+	target.is_array = 0;
+	
+	variable_t *variable = read_variable_name();
+	strcpy(target.name, variable->name);
 
-	read(TIF, "'if' is not found.");
+	if (is(TLSQPAREN)) {
+		read(TLSQPAREN, "'[' is not found.");
 
-	cond_stmt->branch_cond = read_expression();
+		target.is_array = 1;
+		target.index = read_expressions();
 
-	read(TTHEN, "'then' is not found.");
-
-	cond_stmt->then_stmt = read_statement();
-
-	if (is(TELSE)) {
-		read(TELSE, "'else' is not found.");
-
-		cond_stmt->else_stmt = read_statement();
+		read(TRSQPAREN, "']' is not found.");
 	}
 
-	return cond_stmt;
+	return target;
 }
 
-static int is_iteration_statement() {
-	return is(TWHILE);
+static int is_left_part() {
+	return is_variable();
 }
 
-static iteration_statement_t *read_iteration_statement() {
-	iteration_statement_t *iter_stmt = malloc(sizeof(iteration_statement_t));
-	iter_stmt->base.kind = ITERATION;
-	iter_stmt->base.next = NULL;
-
-	read(TWHILE, "'while' is not found.");
-
-	iter_stmt->loop_cond = read_expression();
-
-	read(TDO, "'do' is not found.");
-
-	iter_stmt->loop_stmt = read_statement();
-
-	return iter_stmt;
+static target_variable_t read_left_part() {
+	return read_variable();
 }
 
-static int is_exit_statement() {
-	return is(TBREAK);
+static int is_assignment_statement() {
+	return is_left_part();
 }
-
-static statement_t *read_exit_statement() {
-	statement_t *stmt = malloc(sizeof(statement_t));
-	stmt->kind = EXIT;
-	stmt->next = NULL;
-
-	read(TBREAK, "'break' is not found.");
-
-	return stmt;
-}
-
-static int is_call_statement() {
-	return is(TCALL);
-}
-
-static call_statement_t *read_call_statement() {
-	call_statement_t *call_stmt = malloc(sizeof(call_statement_t));
-	call_stmt->base.kind = CALL;
-	call_stmt->base.next = NULL;
-
-	read(TCALL, "'call' is not found.");
-
-	strcpy(call_stmt->name, token.STR);
-	read(TNAME, "callee procedure name not found.");
-
-	if (is(TLPAREN)) {
-		read(TLPAREN, "'(' is not found.");
-
-		call_stmt->exprs = read_expressions();
-
-		read(TRPAREN, "')' is not found.");
-	}
-
-	return call_stmt;
-}
-
-static statement_t *read_statement() {
-	if (is_assignment_statement())
-		return read_assignment_statement();
-
-	if (is_condition_statement())
-		return read_condition_statement();
-
-	if (is_iteration_statement())
-		return read_iteration_statement();
-
-	if (is_exit_statement())
-		return read_exit_statement();
-
-	if (is_call_statement())
-		return read_call_statement();
-
-	if (is_return_statement())
-		return read_return_statement();
-
-	if (is_input_statement())
-		return read_input_statement();
-
-	if (is_output_statement())
-		return read_output_statement();
-
-	if (is_compound_statement())
-		return read_compound_statement();
-
-	read_empty_statement();
-	return NULL;
-}
-
-
-static int is_compound_statement() {
-	return is(TBEGIN);
-}
-
-static statement_t *read_compound_statement() {
-	statement_t *statement;
-
-	read(TBEGIN, "'begin' is not found.");
-
-	statement = read_statement();
-
-	statement_t *last = statement;
-	while (is(TSEMI)) {
-		read(TSEMI, "';' is not found.");
-
-		for (; last->next != NULL; last = last->next);
-		last->next = read_statement();
-	}
-
-	read(TEND, "'end' is not found.");
-
-	return statement;
-}
-/* ------------------------------------------------------------------------------------ */
-
-/* --- program ------------------------------------------------------------------------ */
-static void read_block(program_t *program) {
-	while (is_variable_declaration() || is_subprogram_declaration()) {
-		if (is_variable_declaration()) {
-			variable_t *last = program->var;
-			if (last == NULL)
-				last = read_variable_declaration();
-			else {
-				for (; last->next != NULL; last = last->next);
-				last->next = read_variable_declaration();
-			}
-		}
-
-		if (is_subprogram_declaration()) {
-			procedure_t *last = program->proc;
-			if (last == NULL)
-				last = read_subprogram_declaration();
-			else {
-				for (; last->next != NULL; last = last->next);
-				last->next = read_subprogram_declaration();
-			}
-		}
-	}
-
-	program->stmt = read_compound_statement();
-}
-
-static program_t read_program() {
-	program_t program;
-	program.var = NULL;
-	program.stmt = NULL;
-	program.proc = NULL;
-
-	read(TPROGRAM, "'program' is not found.");
-
-	strcpy(program.name, token.S);
-	read(TNAME, "program name is not found.");
-
-	read(TSEMI, "';' is not found.");
-
-	read_block(program);
-	read(TDOT, "'.' is not found.");
-
-	return program;
-}
-
-extern program_t parse_program() {
-	update_token();
-	return read_program();
-}
-/* ------------------------------------------------------------------------------------ */
-
-
-
-
-
-
-
-
-
-
-
 
 
 static int read_expressions() {
@@ -465,63 +218,11 @@ static int read_expressions() {
 	return NORMAL;
 }
 
-static int is_return_statement() {
-	return is(TRETURN);
-}
-
-static int read_return_statement() {
-	read(TRETURN, "'return' is not found.");
-
-	return NORMAL;
-}
-
-static int is_assignment_statement() {
-	return is_left_part();
-}
-
-static int read_assignment_statement() {
-	read_left_part();
-
-	read(TASSIGN, "':=' is not found.");
-
-	read_expression();
-
-	return NORMAL;
-}
-
-static int is_left_part() {
-	return is_variable();
-}
-
-static int read_left_part() {
-	read_variable();
-
-	return NORMAL;
-}
-
-static int is_variable() {
-	return is_variable_name();
-}
-
-static int read_variable() {
-	read_variable_name();
-
-	if (is(TLSQPAREN)) {
-		read(TLSQPAREN, "'[' is not found.");
-
-		read_expressions();
-
-		read(TRSQPAREN, "']' is not found.");
-	}
-
-	return NORMAL;
-}
-
 static int is_expression() {
 	return is_simple_expression();
 }
 
-static int read_expression() {
+static expression_t read_expression() {
 	read_simple_expression();
 
 	while (is_relational_operator()) {
@@ -732,7 +433,7 @@ static int is_input_statement() {
 	return is(TREAD) || is(TREADLN);
 }
 
-static int read_input_statement() {
+static input_statement_t *read_input_statement() {
 	if (is(TREAD)) {
 		read(TREAD, "'read' is not found.");
 
@@ -762,7 +463,7 @@ static int is_output_statement() {
 	return is(TWRITE) || is(TWRITELN);
 }
 
-static int read_output_statement() {
+static output_statement_t *read_output_statement() {
 	if (is(TWRITE)) {
 		read(TWRITE, "'write' is not found.");
 
@@ -807,6 +508,309 @@ static int read_output_format() {
 	return NORMAL;
 }
 
-static void read_empty_statement() {
-	// {empty}
+
+
+static assignment_statement_t *read_assignment_statement() {
+	assignment_statement_t *assn_stmt = malloc(sizeof(assignment_statement_t));
+
+	assn_stmt->target = read_left_part();
+
+	read(TASSIGN, "':=' is not found.");
+
+	assn_stmt->expr = read_expression();
+
+	return assn_stmt;
 }
+
+static int is_condition_statement() {
+	return is(TIF);
+}
+
+static condition_statement_t *read_condition_statement() {
+	condition_statement_t *cond_stmt = malloc(sizeof(condition_statement_t));
+	cond_stmt->base.kind = CONDITION;
+	cond_stmt->base.next = NULL;
+
+	read(TIF, "'if' is not found.");
+
+	cond_stmt->branch_cond = read_expression();
+
+	read(TTHEN, "'then' is not found.");
+
+	cond_stmt->then_stmt = read_statement();
+
+	if (is(TELSE)) {
+		read(TELSE, "'else' is not found.");
+
+		cond_stmt->else_stmt = read_statement();
+	}
+
+	return cond_stmt;
+}
+
+static int is_iteration_statement() {
+	return is(TWHILE);
+}
+
+static iteration_statement_t *read_iteration_statement() {
+	iteration_statement_t *iter_stmt = malloc(sizeof(iteration_statement_t));
+	iter_stmt->base.kind = ITERATION;
+	iter_stmt->base.next = NULL;
+
+	read(TWHILE, "'while' is not found.");
+
+	iter_stmt->loop_cond = read_expression();
+
+	read(TDO, "'do' is not found.");
+
+	iter_stmt->loop_stmt = read_statement();
+
+	return iter_stmt;
+}
+
+static int is_exit_statement() {
+	return is(TBREAK);
+}
+
+static statement_t *read_exit_statement() {
+	statement_t *stmt = malloc(sizeof(statement_t));
+	stmt->kind = EXIT;
+	stmt->next = NULL;
+
+	read(TBREAK, "'break' is not found.");
+
+	return stmt;
+}
+
+static int is_call_statement() {
+	return is(TCALL);
+}
+
+static call_statement_t *read_call_statement() {
+	call_statement_t *call_stmt = malloc(sizeof(call_statement_t));
+	call_stmt->base.kind = CALL;
+	call_stmt->base.next = NULL;
+
+	read(TCALL, "'call' is not found.");
+
+	strcpy(call_stmt->name, token.STR);
+	read(TNAME, "callee procedure name not found.");
+
+	if (is(TLPAREN)) {
+		read(TLPAREN, "'(' is not found.");
+
+		call_stmt->exprs = read_expressions();
+
+		read(TRPAREN, "')' is not found.");
+	}
+
+	return call_stmt;
+}
+
+
+static int is_return_statement() {
+	return is(TRETURN);
+}
+
+static statement_t *read_return_statement() {
+	statement_t *stmt = malloc(sizeof(statement_t));
+	stmt->kind = RETURN;
+	stmt->next = NULL;
+
+	read(TRETURN, "'return' is not found.");
+
+	return stmt;
+}
+
+static statement_t *read_empty_statement() {
+	statement_t *stmt = malloc(sizeof(statement_t));
+	stmt->kind = EMPTY;
+	stmt->next = NULL;
+
+	return stmt;
+}
+
+static statement_t *read_statement() {
+	if (is_assignment_statement())
+		return (statement_t *)(read_assignment_statement());
+
+	if (is_condition_statement())
+		return (statement_t *)(read_condition_statement());
+
+	if (is_iteration_statement())
+		return (statement_t *)(read_iteration_statement());
+
+	if (is_exit_statement())
+		return read_exit_statement();
+
+	if (is_call_statement())
+		return read_call_statement();
+
+	if (is_return_statement())
+		return read_return_statement();
+
+	if (is_input_statement())
+		return (statement_t *)(read_input_statement());
+
+	if (is_output_statement())
+		return (statement_t *)(read_output_statement());
+
+	if (is_compound_statement())
+		return read_compound_statement();
+
+	read_empty_statement();
+	return NULL;
+}
+
+
+static int is_compound_statement() {
+	return is(TBEGIN);
+}
+
+static statement_t *read_compound_statement() {
+	statement_t *statement;
+
+	read(TBEGIN, "'begin' is not found.");
+
+	statement = read_statement();
+
+	statement_t *last = statement;
+	while (is(TSEMI)) {
+		read(TSEMI, "';' is not found.");
+
+		for (; last->next != NULL; last = last->next);
+		last->next = read_statement();
+	}
+
+	read(TEND, "'end' is not found.");
+
+	return statement;
+}
+/* ------------------------------------------------------------------------------------ */
+
+/* --- procedure ---------------------------------------------------------------------- */
+static procedure_t *read_procedure_name() {
+	procedure_t *procedure = malloc(sizeof(procedure_t));
+
+	strcpy(procedure->name, token.STR);
+	read(TNAME, "procedure name is not found.");
+
+	return procedure;
+}
+
+static int is_formal_parameters() {
+	return is(TLPAREN);
+}
+
+static variable_t *read_formal_parameters() {
+	variable_t *param;
+
+	read(TLPAREN, "'(' is not found.");
+
+	param = read_variable_names();
+
+	read(TCOLON, "':' is not found.");
+
+	type_t type = read_type();
+	variable_t *last = param;
+	for (; last->next != NULL; last = last->next) {
+		last->type = type;
+	}
+
+	while (is(TSEMI)) {
+		read(TSEMI, "';' is not found.");
+
+		last->next = read_variable_names();
+
+		read(TCOLON, "':' is not found.");
+
+		type = read_type();
+		last = last->next;
+		for (; last->next != NULL; last = last->next) {
+			last->type = type;
+		}
+	}
+
+	read(TRPAREN, "')' is not found.");
+
+	return param;
+}
+
+static int is_subprogram_declaration() {
+	return is(TPROCEDURE);
+}
+
+static procedure_t *read_subprogram_declaration() {
+	procedure_t *procedure;
+
+	read(TPROCEDURE, "'procedure' not found.");
+
+	procedure = read_procedure_name();
+
+	if (is_formal_parameters())
+		procedure->param = read_formal_parameters();
+
+	read(TSEMI, "';' is not found.");
+
+	if (is_variable_declaration())
+		procedure->var = read_variable_declaration();
+
+	procedure->stmt = read_compound_statement();
+
+	read(TSEMI, "';' is not found.");
+
+	return procedure;
+}
+/* ------------------------------------------------------------------------------------ */
+
+/* --- program ------------------------------------------------------------------------ */
+static void read_block(program_t *program) {
+	while (is_variable_declaration() || is_subprogram_declaration()) {
+		if (is_variable_declaration()) {
+			variable_t *last = program->var;
+			if (last == NULL)
+				last = read_variable_declaration();
+			else {
+				for (; last->next != NULL; last = last->next);
+				last->next = read_variable_declaration();
+			}
+		}
+
+		if (is_subprogram_declaration()) {
+			procedure_t *last = program->proc;
+			if (last == NULL)
+				last = read_subprogram_declaration();
+			else {
+				for (; last->next != NULL; last = last->next);
+				last->next = read_subprogram_declaration();
+			}
+		}
+	}
+
+	program->stmt = read_compound_statement();
+}
+
+static program_t read_program() {
+	program_t program;
+	program.var = NULL;
+	program.stmt = NULL;
+	program.proc = NULL;
+
+	read(TPROGRAM, "'program' is not found.");
+
+	strcpy(program.name, token.STR);
+	read(TNAME, "program name is not found.");
+
+	read(TSEMI, "';' is not found.");
+
+	read_block(&program);
+	read(TDOT, "'.' is not found.");
+
+	return program;
+}
+
+extern program_t parse_program() {
+	update_token();
+	return read_program();
+}
+/* ------------------------------------------------------------------------------------ */

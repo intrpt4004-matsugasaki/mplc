@@ -58,28 +58,15 @@ static int is_variable_declaration();
 static variable_t *read_variable_declaration();
 /* ------------------------------------------------------------------------------------ */
 
-/* --- procedure ---------------------------------------------------------------------- */
-typedef struct statement_t;
-
-typedef struct {
-	char name[MAXSTRSIZE];
-	variable_t *param;
-	variable_t *var;
-	statement_t *stmt;
-} procedure_t;
-
-static procedure_t *read_procedure_name();
-
-static int is_formal_parameters();
-static variable_t *read_formal_parameters();
-
-static int is_subprogram_declaration();
-static procedure_t *read_subprogram_declaration();
-/* ------------------------------------------------------------------------------------ */
-
 /* --- statement ---------------------------------------------------------------------- */
 typedef struct statement_t {
-	enum { ASSIGN, CONDITION, ITERATION, EXIT, CALL, RETURN, INPUT, OUTPUT } kind;
+	enum {
+		ASSIGN,
+		CONDITION, ITERATION, EXIT,
+		CALL, RETURN,
+		INPUT, OUTPUT,
+		EMPTY
+	} kind;
 
 	struct statement_t *next;
 } statement_t;
@@ -91,7 +78,9 @@ typedef struct {
 	unsigned int index;
 } target_variable_t;
 
-typedef struct {} expression_t;
+typedef struct {
+	int a; //
+} expression_t;
 
 typedef struct {
 	statement_t base;
@@ -117,7 +106,9 @@ typedef struct {
 	statement_t *loop_stmt;
 } iteration_statement_t;
 
-typedef struct expressions_t;
+typedef struct {
+	 int a; //
+} expressions_t;
 
 typedef struct {
 	statement_t base;
@@ -134,65 +125,18 @@ typedef struct {
 	statement_t base;
 } output_statement_t;
 
-static int is_assignment_statement();
-static assignment_statement_t *read_assignment_statement();
+static int is_variable();
+static target_variable_t read_variable();
 
-static int is_condition_statement();
-static condition_statement_t *read_condition_statement();
-
-static int is_iteration_statement();
-static iteration_statement_t *read_iteration_statement();
-
-static int is_exit_statement();
-static void read_exit_statement();
-
-static int is_call_statement();
-static call_statement_t read_call_statement();
-
-static int is_return_statement();
-static void read_return_statement();
-
-static int is_input_statement();
-static input_statement_t *read_input_statement();
-
-static int is_output_statement();
-static output_statement_t *read_output_statement();
-
-static void read_empty_statement();
-
-static statement_t *read_statement();
-
-static int is_compound_statement();
-static statement_t *read_compound_statement();
-/* ------------------------------------------------------------------------------------ */
-
-/* --- program ------------------------------------------------------------------------ */
-typedef struct {
-	char name[MAXSTRSIZE];
-	variable_t *var;
-	statement_t *stmt;
-	procedure_t *proc;
-} program_t;
-
-static void read_block(program_t *program);
-static program_t read_program();
-
-extern program_t parse_program();
-/* ------------------------------------------------------------------------------------ */
-
+static int is_left_part();
+static target_variable_t read_left_part();
 
 
 
 static int read_expressions();
 
-static int is_left_part();
-static int read_left_part();
-
-static int is_variable();
-static int read_variable();
-
 static int is_expression();
-static int read_expression();
+static expression_t read_expression();
 
 static int is_simple_expression();
 static int read_simple_expression();
@@ -221,5 +165,72 @@ enum {
 	NORMAL = 0,
 	ERROR
 };
+
+
+
+static int is_assignment_statement();
+static assignment_statement_t *read_assignment_statement();
+
+static int is_condition_statement();
+static condition_statement_t *read_condition_statement();
+
+static int is_iteration_statement();
+static iteration_statement_t *read_iteration_statement();
+
+static int is_exit_statement();
+static statement_t *read_exit_statement();
+
+static int is_call_statement();
+static call_statement_t read_call_statement();
+
+static int is_return_statement();
+static statement_t *read_return_statement();
+
+static int is_input_statement();
+static input_statement_t *read_input_statement();
+
+static int is_output_statement();
+static output_statement_t *read_output_statement();
+
+static statement_t *read_empty_statement();
+
+static statement_t *read_statement();
+
+static int is_compound_statement();
+static statement_t *read_compound_statement();
+/* ------------------------------------------------------------------------------------ */
+
+/* --- procedure ---------------------------------------------------------------------- */
+typedef struct procedure_t {
+	char name[MAXSTRSIZE];
+	variable_t *param;
+	variable_t *var;
+	statement_t *stmt;
+
+	struct procedure_t *next;
+} procedure_t;
+
+static procedure_t *read_procedure_name();
+
+static int is_formal_parameters();
+static variable_t *read_formal_parameters();
+
+static int is_subprogram_declaration();
+static procedure_t *read_subprogram_declaration();
+/* ------------------------------------------------------------------------------------ */
+
+/* --- program ------------------------------------------------------------------------ */
+typedef struct {
+	char name[MAXSTRSIZE];
+	variable_t *var;
+	statement_t *stmt;
+	procedure_t *proc;
+} program_t;
+
+static void read_block(program_t *program);
+static program_t read_program();
+
+extern program_t parse_program();
+/* ------------------------------------------------------------------------------------ */
 
 #endif
