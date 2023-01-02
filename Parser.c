@@ -4,13 +4,15 @@
 static token_t token;
 
 static void update_token() {
-	token.CODE = scan();
-	strcpy(token.STR, string_attr);
-	token.NUM = num_attr;
+	token.code = scan();
+	strcpy(token.string, string_attr);
+	token.number = num_attr;
+
+	printf("%s ", tokencode_to_str(token.code));
 }
 
 static int is(const int TOKEN_CODE) {
-	return (token.CODE == TOKEN_CODE);
+	return (token.code == TOKEN_CODE);
 }
 
 static void read(const int TOKEN_CODE, char *error_message) {
@@ -37,7 +39,7 @@ static variable_t *read_variable_name() {
 	variable_t *variable = malloc(sizeof(variable_t));
 	variable->next = NULL;
 
-	strcpy(variable->name, token.STR);
+	strcpy(variable->name, token.string);
 	read(TNAME, "variable name is not found.");
 
 	return variable;
@@ -69,24 +71,24 @@ static standard_type_t read_standard_type() {
 	standard_type_t standard_type;
 
 	if (is(TINTEGER)) {
+		read(TINTEGER, "'integer' is not found.");
 		standard_type = INTEGER;
-		read(TINTEGER, "{unreachable}");
 		return standard_type;
 	}
 
 	if (is(TBOOLEAN)) {
+		read(TBOOLEAN, "'boolean' is not found.");
 		standard_type = BOOLEAN;
-		read(TBOOLEAN, "{unreachable}");
 		return standard_type;
 	}
 
 	if (is(TCHAR)) {
+		read(TCHAR, "'char' is not found.");
 		standard_type = CHAR;
-		read(TCHAR, "{unreachable}");
 		return standard_type;
 	}
 
-	error("unmatch on standard_type.");
+	error("unmatched on standard_type.");
 }
 
 static int is_array_type() {
@@ -100,7 +102,7 @@ static array_type_t read_array_type() {
 
 	read(TLSQPAREN, "'[' is not found.");
 
-	array_type.size = token.NUM;
+	array_type.size = token.number;
 	read(TNUMBER, "number is not found.");
 
 	read(TRSQPAREN, "']' is not found.");
@@ -170,110 +172,147 @@ static variable_t *read_variable_declaration() {
 /* ------------------------------------------------------------------------------------ */
 
 /* --- statement ---------------------------------------------------------------------- */
-static int is_variable() {
-	return is_variable_name();
+// operator -------------------------------------------------
+static int is_additive_operator() {
+	return is(TPLUS) || is(TMINUS) || is(TOR);
 }
 
-static target_variable_t read_variable() {
-	target_variable_t target;
-	target.is_array = 0;
-	
-	variable_t *variable = read_variable_name();
-	strcpy(target.name, variable->name);
+static additive_operator_t read_additive_operator() {
+	additive_operator_t add_opr;
 
-	if (is(TLSQPAREN)) {
-		read(TLSQPAREN, "'[' is not found.");
-
-		target.is_array = 1;
-		target.index = read_expression();
-
-		read(TRSQPAREN, "']' is not found.");
+	if (is(TPLUS)) {
+		read(TPLUS, "'+' is not found.");
+		add_opr = PLUS;
+		return add_opr;
 	}
 
-	return target;
-}
-
-static int is_left_part() {
-	return is_variable();
-}
-
-static target_variable_t read_left_part() {
-	return read_variable();
-}
-
-static int is_assignment_statement() {
-	return is_left_part();
-}
-
-
-static expressions_t read_expressions() {
-	expressions_t exprs;
-
-	read_expression();
-
-	while (is(TCOMMA)) {
-		read(TCOMMA, "',' is not found.");
-
-		read_expression();
+	if (is(TMINUS)) {
+		read(TMINUS, "'-' is not found.");
+		add_opr = MINUS;
+		return add_opr;
 	}
 
-	return exprs;
-}
-
-static int is_expression() {
-	return is_simple_expression();
-}
-
-static expression_t read_expression() {
-	expression_t expr;
-
-	read_simple_expression();
-
-	while (is_relational_operator()) {
-		read_relational_operator();
-
-		read_simple_expression();
+	if (is(TOR)) {
+		read(TOR, "'or' is not found.");
+		add_opr = OR;
+		return add_opr;
 	}
 
-	return expr;
+	error("unmatched on read_additive_operator.");	
 }
 
-static int is_simple_expression() {
-	return is(TPLUS) || is(TMINUS) || is_term();
+static int is_multiplicative_operator() {
+	return is(TSTAR) || is(TDIV) || is(TAND);
 }
 
-static int read_simple_expression() {
-	if (is(TPLUS))
-		read(TPLUS, "'+' is not found.");		
+static multiplicative_operator_t read_multiplicative_operator() {
+	multiplicative_operator_t mul_opr;
 
-	if (is(TMINUS))
-		read(TMINUS, "'-' is not found.");		
-
-	read_term();
-
-	while (is_additive_operator()) {
-		read_additive_operator();
-
-		read_term();
+	if (is(TSTAR)) {
+		read(TSTAR, "'*' is not found.");
+		mul_opr = ASTERISK;
+		return mul_opr;
 	}
 
-	return NORMAL;
-}
-
-static int is_term() {
-	return is_factor();
-}
-
-static int read_term() {
-	read_factor();
-
-	while (is_multiplicative_operator()) {
-		read_multiplicative_operator();
-
-		read_factor();
+	if (is(TDIV)) {
+		read(TDIV, "'div' is not found.");
+		mul_opr = DIV;
+		return mul_opr;
 	}
 
-	return NORMAL;
+	if (is(TAND)) {
+		read(TAND, "'and' is not found.");
+		mul_opr = AND;
+		return mul_opr;
+	}
+
+	error("unmatched on read_multiplicative_operator.");	
+}
+
+static int is_relational_operator() {
+	return is(TEQUAL) || is(TNOTEQ)
+		|| is(TLE) || is(TLEEQ)
+		|| is(TGR) || is(TGREQ);
+}
+
+static relational_operator_t read_relational_operator() {
+	relational_operator_t rel_opr;
+
+	if (is(TEQUAL)) {
+		read(TEQUAL, "'=' is not found.");
+		rel_opr = EQUAL;
+		return rel_opr;
+	}
+
+	if (is(TNOTEQ)) {
+		read(TNOTEQ, "'<>' is not found.");
+		rel_opr = NOT_EQUAL;
+		return rel_opr;
+	}
+
+	if (is(TLE)) {
+		read(TLE, "'<' is not found.");
+		rel_opr = LESS;
+		return rel_opr;
+	}
+
+	if (is(TLEEQ)) {
+		read(TLEEQ, "'<=' is not found.");
+		rel_opr = LESS_OR_EQUAL;
+		return rel_opr;
+	}
+
+	if (is(TGR)) {
+		read(TGR, "'>' is not found.");
+		rel_opr = GREATER;
+		return rel_opr;
+	}
+
+	if (is(TGREQ)) {
+		read(TGREQ, "'>=' is not found.");
+		rel_opr = GREATER_EQUAL;
+		return rel_opr;
+	}
+
+	error("unmatched on read_relational_operator.");
+}
+// ----------------------------------------------------------
+
+// expression -----------------------------------------------
+static int is_constant() {
+	return is(TNUMBER) || is(TFALSE) || is(TTRUE) || is(TSTRING);
+}
+
+static constant_t read_constant() {
+	constant_t constant;
+
+	if (is(TNUMBER)) {
+		read(TNUMBER, "number is not found.");
+		constant.kind = NUMBER;
+		constant.number = token.number;
+		return constant;
+	}
+
+	if (is(TFALSE)) {
+		read(TFALSE, "'false' is not found.");
+		constant.kind = FALSE;
+		return constant;
+	}
+
+	if (is(TTRUE)) {
+		read(TTRUE, "'true' is not found.");
+		constant.kind = TRUE;
+		return constant;
+	}
+
+	if (is(TSTRING)) {
+		read(TSTRING, "string is not found.");
+		constant.kind = STRING;
+		strcpy(constant.string, token.string);
+		return constant;
+	}
+
+	error("unmachted on read_constant.");
 }
 
 static int is_factor() {
@@ -281,7 +320,7 @@ static int is_factor() {
 		is(TLPAREN) || is(TNOT) || is_standard_type();
 }
 
-static int read_factor() {
+static factor_t read_factor() {
 	if (is_variable()) {
 		read_variable();
 		return NORMAL;
@@ -319,120 +358,235 @@ static int read_factor() {
 	error("unmachted on read_factor.");
 }
 
-static int is_constant() {
-	return is(TNUMBER) || is(TFALSE) || is(TTRUE) || is(TSTRING);
+static int is_term() {
+	return is_factor();
 }
 
-static int read_constant() {
-	if (is(TNUMBER)) {
-		read(TNUMBER, "number is not found.");
-		return NORMAL;
+static term_t read_term() {
+	read_factor();
+
+	while (is_multiplicative_operator()) {
+		read_multiplicative_operator();
+
+		read_factor();
 	}
 
-	if (is(TFALSE)) {
-		read(TFALSE, "'false' is not found.");
-		return NORMAL;
-	}
-
-	if (is(TTRUE)) {
-		read(TTRUE, "'true' is not found.");
-		return NORMAL;
-	}
-
-	if (is(TSTRING)) {
-		read(TSTRING, "string is not found.");
-		return NORMAL;
-	}
-
-	error("unmachted on read_constant.");
+	return NORMAL;
 }
 
-static int is_multiplicative_operator() {
-	return is(TSTAR) || is(TDIV) || is(TAND);
+static int is_simple_expression() {
+	return is(TPLUS) || is(TMINUS) || is_term();
 }
 
-static int read_multiplicative_operator() {
-	if (is(TSTAR)) {
-		read(TSTAR, "'*' is not found.");
-		return NORMAL;
+static simple_expression_t read_simple_expression() {
+	if (is(TPLUS))
+		read(TPLUS, "'+' is not found.");		
+
+	if (is(TMINUS))
+		read(TMINUS, "'-' is not found.");		
+
+	read_term();
+
+	while (is_additive_operator()) {
+		read_additive_operator();
+
+		read_term();
 	}
 
-	if (is(TDIV)) {
-		read(TDIV, "'div' is not found.");
-		return NORMAL;
-	}
-
-	if (is(TAND)) {
-		read(TAND, "'and' is not found.");
-		return NORMAL;
-	}
-
-	error("unmatched on read_multiplicative_operator.");	
+	return NORMAL;
 }
 
-static int is_additive_operator() {
-	return is(TPLUS) || is(TMINUS) || is(TOR);
+static int is_expression() {
+	return is_simple_expression();
 }
 
-static int read_additive_operator() {
-	if (is(TPLUS)) {
-		read(TPLUS, "'+' is not found.");
-		return NORMAL;
+static expression_t read_expression() {
+	expression_t expr;
+
+	read_simple_expression();
+
+	while (is_relational_operator()) {
+		read_relational_operator();
+
+		read_simple_expression();
 	}
 
-	if (is(TMINUS)) {
-		read(TMINUS, "'-' is not found.");
-		return NORMAL;
-	}
+	return expr;
+}
+// ----------------------------------------------------------
 
-	if (is(TOR)) {
-		read(TOR, "'or' is not found.");
-		return NORMAL;
-	}
-
-	error("unmatched on read_additive_operator.");	
+// assignment statement -------------------------------------
+static int is_variable() {
+	return is_variable_name();
 }
 
-static int is_relational_operator() {
-	return is(TEQUAL) || is(TNOTEQ)
-		|| is(TLE) || is(TLEEQ)
-		|| is(TGR) || is(TGREQ);
+static target_variable_t read_variable() {
+	target_variable_t target;
+	target.is_array = 0;
+	
+	variable_t *variable = read_variable_name();
+	strcpy(target.name, variable->name);
+
+	if (is(TLSQPAREN)) {
+		read(TLSQPAREN, "'[' is not found.");
+
+		target.is_array = 1;
+		target.index = read_expression();
+
+		read(TRSQPAREN, "']' is not found.");
+	}
+
+	return target;
 }
 
-static int read_relational_operator() {
-	if (is(TEQUAL)) {
-		read(TEQUAL, "'=' is not found.");
-		return NORMAL;
-	}
-
-	if (is(TNOTEQ)) {
-		read(TNOTEQ, "'<>' is not found.");
-		return NORMAL;
-	}
-
-	if (is(TLE)) {
-		read(TLE, "'<' is not found.");
-		return NORMAL;
-	}
-
-	if (is(TLEEQ)) {
-		read(TLEEQ, "'<=' is not found.");
-		return NORMAL;
-	}
-
-	if (is(TGR)) {
-		read(TGR, "'>' is not found.");
-		return NORMAL;
-	}
-
-	if (is(TGREQ)) {
-		read(TGREQ, "'>=' is not found.");
-		return NORMAL;
-	}
-
-	error("unmatched on read_relational_operator.");
+static int is_left_part() {
+	return is_variable();
 }
 
+static target_variable_t read_left_part() {
+	return read_variable();
+}
+
+static int is_assignment_statement() {
+	return is_left_part();
+}
+
+static assignment_statement_t *read_assignment_statement() {
+	assignment_statement_t *assn_stmt = malloc(sizeof(assignment_statement_t));
+
+	assn_stmt->target = read_left_part();
+
+	read(TASSIGN, "':=' is not found.");
+
+	assn_stmt->expr = read_expression();
+
+	return assn_stmt;
+}
+// ----------------------------------------------------------
+
+// condition statement --------------------------------------
+static int is_condition_statement() {
+	return is(TIF);
+}
+
+static condition_statement_t *read_condition_statement() {
+	condition_statement_t *cond_stmt = malloc(sizeof(condition_statement_t));
+	cond_stmt->base.kind = CONDITION;
+	cond_stmt->base.next = NULL;
+
+	read(TIF, "'if' is not found.");
+
+	cond_stmt->branch_cond = read_expression();
+
+	read(TTHEN, "'then' is not found.");
+
+	cond_stmt->then_stmt = read_statement();
+
+	if (is(TELSE)) {
+		read(TELSE, "'else' is not found.");
+
+		cond_stmt->else_stmt = read_statement();
+	}
+
+	return cond_stmt;
+}
+// ----------------------------------------------------------
+
+// iteration statement --------------------------------------
+static int is_iteration_statement() {
+	return is(TWHILE);
+}
+
+static iteration_statement_t *read_iteration_statement() {
+	iteration_statement_t *iter_stmt = malloc(sizeof(iteration_statement_t));
+	iter_stmt->base.kind = ITERATION;
+	iter_stmt->base.next = NULL;
+
+	read(TWHILE, "'while' is not found.");
+
+	iter_stmt->loop_cond = read_expression();
+
+	read(TDO, "'do' is not found.");
+
+	iter_stmt->loop_stmt = read_statement();
+
+	return iter_stmt;
+}
+// ----------------------------------------------------------
+
+// exit statement -------------------------------------------
+static int is_exit_statement() {
+	return is(TBREAK);
+}
+
+static statement_t *read_exit_statement() {
+	statement_t *stmt = malloc(sizeof(statement_t));
+	stmt->kind = EXIT;
+	stmt->next = NULL;
+
+	read(TBREAK, "'break' is not found.");
+
+	return stmt;
+}
+// ----------------------------------------------------------
+
+// call statement -------------------------------------------
+static expressions_t read_expressions() {
+	expressions_t exprs;
+
+	read_expression();
+
+	while (is(TCOMMA)) {
+		read(TCOMMA, "',' is not found.");
+
+		read_expression();
+	}
+
+	return exprs;
+}
+
+static int is_call_statement() {
+	return is(TCALL);
+}
+
+static call_statement_t *read_call_statement() {
+	call_statement_t *call_stmt = malloc(sizeof(call_statement_t));
+	call_stmt->base.kind = CALL;
+	call_stmt->base.next = NULL;
+
+	read(TCALL, "'call' is not found.");
+
+	strcpy(call_stmt->name, token.string);
+	read(TNAME, "callee procedure name not found.");
+
+	if (is(TLPAREN)) {
+		read(TLPAREN, "'(' is not found.");
+
+		call_stmt->exprs = read_expressions();
+
+		read(TRPAREN, "')' is not found.");
+	}
+
+	return call_stmt;
+}
+// ----------------------------------------------------------
+
+// return statement -----------------------------------------
+static int is_return_statement() {
+	return is(TRETURN);
+}
+
+static statement_t *read_return_statement() {
+	statement_t *stmt = malloc(sizeof(statement_t));
+	stmt->kind = RETURN;
+	stmt->next = NULL;
+
+	read(TRETURN, "'return' is not found.");
+
+	return stmt;
+}// ----------------------------------------------------------
+
+// input statement ------------------------------------------
 static int is_input_statement() {
 	return is(TREAD) || is(TREADLN);
 }
@@ -458,6 +612,27 @@ static input_statement_t *read_input_statement() {
 		}
 
 		read(TRPAREN, "')' is not found.");
+	}
+
+	return NORMAL;
+}
+// ----------------------------------------------------------
+
+// output statement -----------------------------------------
+static output_format_t read_output_format() {
+	if (is_expression()) {
+		read_expression();
+
+		if (is(TCOLON)) {
+			read(TCOLON, "':' is not found.");
+			read(TNUMBER, "number is not found.");
+		}
+
+	} else if (is(TSTRING)) {
+		read(TSTRING, "string is not found.");
+
+	} else {
+		error("unmatched on read_output_format.");
 	}
 
 	return NORMAL;
@@ -492,140 +667,9 @@ static output_statement_t *read_output_statement() {
 
 	return NORMAL;
 }
+// ----------------------------------------------------------
 
-static int read_output_format() {
-	if (is_expression()) {
-		read_expression();
-
-		if (is(TCOLON)) {
-			read(TCOLON, "':' is not found.");
-			read(TNUMBER, "number is not found.");
-		}
-
-	} else if (is(TSTRING)) {
-		read(TSTRING, "string is not found.");
-
-	} else {
-		error("unmatched on read_output_format.");
-	}
-
-	return NORMAL;
-}
-
-
-
-static assignment_statement_t *read_assignment_statement() {
-	assignment_statement_t *assn_stmt = malloc(sizeof(assignment_statement_t));
-
-	assn_stmt->target = read_left_part();
-
-	read(TASSIGN, "':=' is not found.");
-
-	assn_stmt->expr = read_expression();
-
-	return assn_stmt;
-}
-
-static int is_condition_statement() {
-	return is(TIF);
-}
-
-static condition_statement_t *read_condition_statement() {
-	condition_statement_t *cond_stmt = malloc(sizeof(condition_statement_t));
-	cond_stmt->base.kind = CONDITION;
-	cond_stmt->base.next = NULL;
-
-	read(TIF, "'if' is not found.");
-
-	cond_stmt->branch_cond = read_expression();
-
-	read(TTHEN, "'then' is not found.");
-
-	cond_stmt->then_stmt = read_statement();
-
-	if (is(TELSE)) {
-		read(TELSE, "'else' is not found.");
-
-		cond_stmt->else_stmt = read_statement();
-	}
-
-	return cond_stmt;
-}
-
-static int is_iteration_statement() {
-	return is(TWHILE);
-}
-
-static iteration_statement_t *read_iteration_statement() {
-	iteration_statement_t *iter_stmt = malloc(sizeof(iteration_statement_t));
-	iter_stmt->base.kind = ITERATION;
-	iter_stmt->base.next = NULL;
-
-	read(TWHILE, "'while' is not found.");
-
-	iter_stmt->loop_cond = read_expression();
-
-	read(TDO, "'do' is not found.");
-
-	iter_stmt->loop_stmt = read_statement();
-
-	return iter_stmt;
-}
-
-static int is_exit_statement() {
-	return is(TBREAK);
-}
-
-static statement_t *read_exit_statement() {
-	statement_t *stmt = malloc(sizeof(statement_t));
-	stmt->kind = EXIT;
-	stmt->next = NULL;
-
-	read(TBREAK, "'break' is not found.");
-
-	return stmt;
-}
-
-static int is_call_statement() {
-	return is(TCALL);
-}
-
-static call_statement_t *read_call_statement() {
-	call_statement_t *call_stmt = malloc(sizeof(call_statement_t));
-	call_stmt->base.kind = CALL;
-	call_stmt->base.next = NULL;
-
-	read(TCALL, "'call' is not found.");
-
-	strcpy(call_stmt->name, token.STR);
-	read(TNAME, "callee procedure name not found.");
-
-	if (is(TLPAREN)) {
-		read(TLPAREN, "'(' is not found.");
-
-		call_stmt->exprs = read_expressions();
-
-		read(TRPAREN, "')' is not found.");
-	}
-
-	return call_stmt;
-}
-
-
-static int is_return_statement() {
-	return is(TRETURN);
-}
-
-static statement_t *read_return_statement() {
-	statement_t *stmt = malloc(sizeof(statement_t));
-	stmt->kind = RETURN;
-	stmt->next = NULL;
-
-	read(TRETURN, "'return' is not found.");
-
-	return stmt;
-}
-
+// empty statement ------------------------------------------
 static statement_t *read_empty_statement() {
 	statement_t *stmt = malloc(sizeof(statement_t));
 	stmt->kind = EMPTY;
@@ -633,7 +677,9 @@ static statement_t *read_empty_statement() {
 
 	return stmt;
 }
+// ----------------------------------------------------------
 
+// statement ------------------------------------------------
 static statement_t *read_statement() {
 	if (is_assignment_statement())
 		return (statement_t *)(read_assignment_statement());
@@ -662,11 +708,10 @@ static statement_t *read_statement() {
 	if (is_compound_statement())
 		return read_compound_statement();
 
-	read_empty_statement();
-	return NULL;
-}
+	return read_empty_statement();
+}// ----------------------------------------------------------
 
-
+// compound statement ---------------------------------------
 static int is_compound_statement() {
 	return is(TBEGIN);
 }
@@ -690,13 +735,14 @@ static statement_t *read_compound_statement() {
 
 	return statement;
 }
+// ----------------------------------------------------------
 /* ------------------------------------------------------------------------------------ */
 
 /* --- procedure ---------------------------------------------------------------------- */
 static procedure_t *read_procedure_name() {
 	procedure_t *procedure = malloc(sizeof(procedure_t));
 
-	strcpy(procedure->name, token.STR);
+	strcpy(procedure->name, token.string);
 	read(TNAME, "procedure name is not found.");
 
 	return procedure;
@@ -802,7 +848,7 @@ static program_t read_program() {
 
 	read(TPROGRAM, "'program' is not found.");
 
-	strcpy(program.name, token.STR);
+	strcpy(program.name, token.string);
 	read(TNAME, "program name is not found.");
 
 	read(TSEMI, "';' is not found.");
@@ -815,6 +861,10 @@ static program_t read_program() {
 
 extern program_t parse_program() {
 	update_token();
-	return read_program();
+
+	program_t program = read_program();
+	end_scan();
+
+	return program;
 }
 /* ------------------------------------------------------------------------------------ */

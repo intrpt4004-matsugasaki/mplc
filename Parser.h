@@ -5,9 +5,9 @@
 
 /* --- token -------------------------------------------------------------------------- */
 typedef struct {
-	int CODE;
-	char STR[MAXSTRSIZE];
-	int NUM;
+	int code;
+	char string[MAXSTRSIZE];
+	int number;
 } token_t;
 
 static void update_token();
@@ -125,79 +125,125 @@ typedef struct {
 	statement_t base;
 } output_statement_t;
 
+
+
+
+typedef enum {
+	PLUS, MINUS, OR
+} additive_operator_t;
+
+typedef enum {
+	ASTERISK, DIV, AND
+} multiplicative_operator_t;
+
+typedef enum {
+	EQUAL, NOT_EQUAL,
+	LESS, LESS_OR_EQUAL,
+	GREATER, GREATER_OR_EQUAL
+} relational_operator_t;
+
+typedef enum {
+	NUMBER,
+	TRUE, FALSE,
+	STRING
+} constant_kind_t;
+
+typedef struct {
+	constant_kind_t kind;
+	int number;
+	char *string;
+} constant_t;
+
+// operator -------------------------------------------------
+static int is_additive_operator();
+static additive_operator_t read_additive_operator();
+
+static int is_multiplicative_operator();
+static multiplicative_operator_t read_multiplicative_operator();
+
+static int is_relational_operator();
+static relational_operator_t read_relational_operator();
+// ----------------------------------------------------------
+
+// expression -----------------------------------------------
+static int is_constant();
+static constant_t read_constant();
+
+static int is_factor();
+static factor_t read_factor();
+
+static int is_term();
+static term_t read_term();
+
+static int is_simple_expression();
+static simple_expression_t read_simple_expression();
+
+static int is_expression();
+static expression_t read_expression();
+// ----------------------------------------------------------
+
+// assignment statement -------------------------------------
 static int is_variable();
 static target_variable_t read_variable();
 
 static int is_left_part();
 static target_variable_t read_left_part();
 
-
-
-static expressions_t read_expressions();
-
-static int is_expression();
-static expression_t read_expression();
-
-static int is_simple_expression();
-static int read_simple_expression();
-
-static int is_term();
-static int read_term();
-
-static int is_factor();
-static int read_factor();
-
-static int is_constant();
-static int read_constant();
-
-static int is_multiplicative_operator();
-static int read_multiplicative_operator();
-
-static int is_additive_operator();
-static int read_additive_operator();
-
-static int is_relational_operator();
-static int read_relational_operator();
-
-static int read_output_format();
-
-enum {
-	NORMAL = 0,
-	ERROR
-};
-
-
-
 static int is_assignment_statement();
 static assignment_statement_t *read_assignment_statement();
+// ----------------------------------------------------------
 
+// condition statement --------------------------------------
 static int is_condition_statement();
 static condition_statement_t *read_condition_statement();
+// ----------------------------------------------------------
 
+// iteration statement --------------------------------------
 static int is_iteration_statement();
 static iteration_statement_t *read_iteration_statement();
+// ----------------------------------------------------------
 
+// exit statement -------------------------------------------
 static int is_exit_statement();
 static statement_t *read_exit_statement();
+// ----------------------------------------------------------
+
+// call statement -------------------------------------------
+static expressions_t read_expressions();
 
 static int is_call_statement();
 static call_statement_t *read_call_statement();
+// ----------------------------------------------------------
 
+// return statement -----------------------------------------
 static int is_return_statement();
 static statement_t *read_return_statement();
+// ----------------------------------------------------------
 
+// input statement ------------------------------------------
 static int is_input_statement();
 static input_statement_t *read_input_statement();
+// ----------------------------------------------------------
+
+// output statement -----------------------------------------
+static output_format_t read_output_format();
 
 static int is_output_statement();
 static output_statement_t *read_output_statement();
+// ----------------------------------------------------------
 
+// empty statement ------------------------------------------
 static statement_t *read_empty_statement();
+// ----------------------------------------------------------
 
+// statement ------------------------------------------------
 static statement_t *read_statement();
+// ----------------------------------------------------------
 
+// compound statement ---------------------------------------
 static int is_compound_statement();
 static statement_t *read_compound_statement();
+// ----------------------------------------------------------
 /* ------------------------------------------------------------------------------------ */
 
 /* --- procedure ---------------------------------------------------------------------- */
