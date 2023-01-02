@@ -270,7 +270,7 @@ static relational_operator_t read_relational_operator() {
 
 	if (is(TGREQ)) {
 		read(TGREQ, "'>=' is not found.");
-		rel_opr = GREATER_EQUAL;
+		rel_opr = GREATER_OR_EQUAL;
 		return rel_opr;
 	}
 
@@ -321,38 +321,52 @@ static int is_factor() {
 }
 
 static factor_t read_factor() {
+	factor_t factor;
+
 	if (is_variable()) {
-		read_variable();
-		return NORMAL;
+		factor.kind = VAR_REF;
+		factor.var_ref = read_variable();
+		return factor;
 	}
 
 	if (is_constant()) {
-		read_constant();
-		return NORMAL;
+		factor.kind = CONST;
+		factor.cons = read_constant();
+		return factor;
 	}
 
 	if (is(TLPAREN)) {
 		read(TLPAREN, "'(' is not found.");		
-		read_expression();
+
+		factor.kind = EXPR;
+		factor.expr = read_expression();
+
 		read(TRPAREN, "')' is not found.");
-		return NORMAL;
+
+		return factor;
 	}
 
 	if (is(TNOT)) {
 		read(TNOT, "'not' is not found.");		
-		read_factor();
-		return NORMAL;
+
+		factor.kind = NOT_FACTOR;
+		factor.factor = malloc(sizeof(factor_t));
+		*factor.factor = read_factor();
+		return factor;
 	}
 
 	if (is_standard_type()) {
-		read_standard_type();
+		factor.kind = STD_TYPE;
+
+		factor.std_type = read_standard_type();
 
 		read(TLPAREN, "'(' is not found.");		
 
-		read_expression();
+		factor.expr = read_expression();
 
 		read(TRPAREN, "')' is not found.");
-		return NORMAL;
+
+		return factor;
 	}
 
 	error("unmachted on read_factor.");
@@ -363,6 +377,8 @@ static int is_term() {
 }
 
 static term_t read_term() {
+	term_t term;
+
 	read_factor();
 
 	while (is_multiplicative_operator()) {
@@ -371,7 +387,7 @@ static term_t read_term() {
 		read_factor();
 	}
 
-	return NORMAL;
+	return term;
 }
 
 static int is_simple_expression() {
@@ -379,6 +395,8 @@ static int is_simple_expression() {
 }
 
 static simple_expression_t read_simple_expression() {
+	simple_expression_t simple_expr;
+
 	if (is(TPLUS))
 		read(TPLUS, "'+' is not found.");		
 
@@ -393,7 +411,7 @@ static simple_expression_t read_simple_expression() {
 		read_term();
 	}
 
-	return NORMAL;
+	return simple_expr;
 }
 
 static int is_expression() {
@@ -420,8 +438,8 @@ static int is_variable() {
 	return is_variable_name();
 }
 
-static target_variable_t read_variable() {
-	target_variable_t target;
+static variable_reference_t read_variable() {
+	variable_reference_t target;
 	target.is_array = 0;
 	
 	variable_t *variable = read_variable_name();
@@ -443,7 +461,7 @@ static int is_left_part() {
 	return is_variable();
 }
 
-static target_variable_t read_left_part() {
+static variable_reference_t read_left_part() {
 	return read_variable();
 }
 
@@ -592,6 +610,8 @@ static int is_input_statement() {
 }
 
 static input_statement_t *read_input_statement() {
+	input_statement_t *input_stmt;
+
 	if (is(TREAD)) {
 		read(TREAD, "'read' is not found.");
 
@@ -614,12 +634,14 @@ static input_statement_t *read_input_statement() {
 		read(TRPAREN, "')' is not found.");
 	}
 
-	return NORMAL;
+	return input_stmt;
 }
 // ----------------------------------------------------------
 
 // output statement -----------------------------------------
 static output_format_t read_output_format() {
+	output_format_t format;
+
 	if (is_expression()) {
 		read_expression();
 
@@ -635,7 +657,7 @@ static output_format_t read_output_format() {
 		error("unmatched on read_output_format.");
 	}
 
-	return NORMAL;
+	return format;
 }
 
 static int is_output_statement() {
@@ -643,6 +665,8 @@ static int is_output_statement() {
 }
 
 static output_statement_t *read_output_statement() {
+	output_statement_t *output_stmt;
+
 	if (is(TWRITE)) {
 		read(TWRITE, "'write' is not found.");
 
@@ -665,7 +689,7 @@ static output_statement_t *read_output_statement() {
 		read(TRPAREN, "')' is not found.");
 	}
 
-	return NORMAL;
+	return output_stmt;
 }
 // ----------------------------------------------------------
 

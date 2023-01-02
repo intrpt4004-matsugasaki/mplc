@@ -80,12 +80,12 @@ typedef struct {
 
 	int is_array;
 	expression_t index;
-} target_variable_t;
+} variable_reference_t;
 
 typedef struct {
 	statement_t base;
 
-	target_variable_t target;
+	variable_reference_t target;
 	expression_t expr;
 } assignment_statement_t;
 
@@ -125,6 +125,18 @@ typedef struct {
 	statement_t base;
 } output_statement_t;
 
+typedef struct {
+	int a;
+} simple_expression_t;
+
+typedef struct {
+	int a;
+} term_t;
+
+typedef struct {
+	int a;
+} output_format_t;
+
 
 
 
@@ -142,17 +154,30 @@ typedef enum {
 	GREATER, GREATER_OR_EQUAL
 } relational_operator_t;
 
-typedef enum {
-	NUMBER,
-	TRUE, FALSE,
-	STRING
-} constant_kind_t;
-
 typedef struct {
-	constant_kind_t kind;
+	enum {
+		NUMBER,
+		TRUE, FALSE,
+		STRING
+	} kind;
+
 	int number;
 	char *string;
 } constant_t;
+
+typedef struct factor_t {
+	enum {
+		VAR_REF, CONST,
+		EXPR, NOT_FACTOR,
+		STD_TYPE
+	} kind;
+
+	variable_reference_t var_ref;
+	constant_t cons;
+	expression_t expr;
+	struct factor_t *factor;
+	standard_type_t std_type;
+} factor_t;
 
 // operator -------------------------------------------------
 static int is_additive_operator();
@@ -184,10 +209,10 @@ static expression_t read_expression();
 
 // assignment statement -------------------------------------
 static int is_variable();
-static target_variable_t read_variable();
+static variable_reference_t read_variable();
 
 static int is_left_part();
-static target_variable_t read_left_part();
+static variable_reference_t read_left_part();
 
 static int is_assignment_statement();
 static assignment_statement_t *read_assignment_statement();
