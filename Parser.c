@@ -150,6 +150,7 @@ static variable_t *read_variable_declaration() {
 	for (; last->next != NULL; last = last->next) {
 		last->type = type;
 	}
+	last->type = type;
 
 	read(TSEMI, "';' is not found.");
 
@@ -163,6 +164,7 @@ static variable_t *read_variable_declaration() {
 		for (; last->next != NULL; last = last->next) {
 			last->type = type;
 		}
+		last->type = type;
 
 		read(TSEMI, "';' is not found.");
 	}
@@ -643,14 +645,22 @@ static output_format_t read_output_format() {
 	output_format_t format;
 
 	if (is_expression()) {
-		read_expression();
+		format.kind = EXPR_OFMT;
+		format.expr = read_expression();
 
 		if (is(TCOLON)) {
 			read(TCOLON, "':' is not found.");
+			
+//			format.expr_num = malloc(sizeof(int));
+//			*format.expr_num = token.num;
 			read(TNUMBER, "number is not found.");
 		}
 
 	} else if (is(TSTRING)) {
+		format.kind = STR_OFMT;
+
+		format.str = malloc(sizeof(char) * MAXSTRSIZE);
+		strcpy(format.str, token.string);
 		read(TSTRING, "string is not found.");
 
 	} else {
@@ -790,6 +800,7 @@ static variable_t *read_formal_parameters() {
 	for (; last->next != NULL; last = last->next) {
 		last->type = type;
 	}
+	last->type = type;
 
 	while (is(TSEMI)) {
 		read(TSEMI, "';' is not found.");
@@ -803,6 +814,7 @@ static variable_t *read_formal_parameters() {
 		for (; last->next != NULL; last = last->next) {
 			last->type = type;
 		}
+		last->type = type;
 	}
 
 	read(TRPAREN, "')' is not found.");
@@ -841,20 +853,20 @@ static procedure_t *read_subprogram_declaration() {
 static void read_block(program_t *program) {
 	while (is_variable_declaration() || is_subprogram_declaration()) {
 		if (is_variable_declaration()) {
-			variable_t *last = program->var;
-			if (last == NULL)
-				last = read_variable_declaration();
+			if (program->var == NULL)
+				program->var = read_variable_declaration();
 			else {
+				variable_t *last = program->var;
 				for (; last->next != NULL; last = last->next);
 				last->next = read_variable_declaration();
 			}
 		}
 
 		if (is_subprogram_declaration()) {
-			procedure_t *last = program->proc;
-			if (last == NULL)
-				last = read_subprogram_declaration();
+			if (program->proc == NULL)
+				program->proc = read_subprogram_declaration();
 			else {
+				procedure_t *last = program->proc;
 				for (; last->next != NULL; last = last->next);
 				last->next = read_subprogram_declaration();
 			}
@@ -878,7 +890,7 @@ static program_t read_program() {
 	read(TSEMI, "';' is not found.");
 
 	read_block(&program);
-	read(TDOT, "'.' is not found.");
+//	read(TDOT, "'.' is not found.");
 
 	return program;
 }

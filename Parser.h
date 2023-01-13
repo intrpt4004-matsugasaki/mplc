@@ -126,20 +126,24 @@ typedef struct {
 } output_statement_t;
 
 typedef struct {
-	int a;
+	int a; //
 } simple_expression_t;
 
 typedef struct {
-	int a;
+	int a; //
 } term_t;
 
 typedef struct {
-	int a;
+	enum { EXPR_OFMT, STR_OFMT } kind;
+	expression_t expr;
+	char *str;
 } output_format_t;
 
 
 
 
+
+// operator -------------------------------------------------
 typedef enum {
 	PLUS, MINUS, OR
 } additive_operator_t;
@@ -154,6 +158,17 @@ typedef enum {
 	GREATER, GREATER_OR_EQUAL
 } relational_operator_t;
 
+static int is_additive_operator();
+static additive_operator_t read_additive_operator();
+
+static int is_multiplicative_operator();
+static multiplicative_operator_t read_multiplicative_operator();
+
+static int is_relational_operator();
+static relational_operator_t read_relational_operator();
+// ----------------------------------------------------------
+
+// expression -----------------------------------------------
 typedef struct {
 	enum {
 		NUMBER,
@@ -179,18 +194,6 @@ typedef struct factor_t {
 	standard_type_t std_type;
 } factor_t;
 
-// operator -------------------------------------------------
-static int is_additive_operator();
-static additive_operator_t read_additive_operator();
-
-static int is_multiplicative_operator();
-static multiplicative_operator_t read_multiplicative_operator();
-
-static int is_relational_operator();
-static relational_operator_t read_relational_operator();
-// ----------------------------------------------------------
-
-// expression -----------------------------------------------
 static int is_constant();
 static constant_t read_constant();
 
