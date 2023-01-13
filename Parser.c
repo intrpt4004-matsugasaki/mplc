@@ -8,7 +8,7 @@ static void update_token() {
 	strcpy(token.string, string_attr);
 	token.number = num_attr;
 
-	printf("%s ", tokencode_to_str(token.code));
+	if (token.code != -1) printf("%s ", tokencode_to_str(token.code));
 }
 
 static int is(const int TOKEN_CODE) {
@@ -351,7 +351,7 @@ static factor_t read_factor() {
 	if (is(TNOT)) {
 		read(TNOT, "'not' is not found.");		
 
-		factor.kind = NOT_FACTOR;
+		factor.kind = INVERT_FACTOR;
 		factor.factor = malloc(sizeof(factor_t));
 		*factor.factor = read_factor();
 		return factor;
@@ -473,6 +473,8 @@ static int is_assignment_statement() {
 
 static assignment_statement_t *read_assignment_statement() {
 	assignment_statement_t *assn_stmt = malloc(sizeof(assignment_statement_t));
+	assn_stmt->base.kind = ASSIGN;
+	assn_stmt->base.next = NULL;
 
 	assn_stmt->target = read_left_part();
 
@@ -890,7 +892,7 @@ static program_t read_program() {
 	read(TSEMI, "';' is not found.");
 
 	read_block(&program);
-//	read(TDOT, "'.' is not found.");
+	read(TDOT, "'.' is not found.");
 
 	return program;
 }

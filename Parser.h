@@ -71,7 +71,7 @@ typedef struct statement_t {
 	struct statement_t *next;
 } statement_t;
 
-typedef struct {
+typedef struct { //[]
 	int a; //
 } expression_t;
 
@@ -81,67 +81,6 @@ typedef struct {
 	int is_array;
 	expression_t index;
 } variable_reference_t;
-
-typedef struct {
-	statement_t base;
-
-	variable_reference_t target;
-	expression_t expr;
-} assignment_statement_t;
-
-typedef struct {
-	statement_t base;
-
-	expression_t branch_cond;
-	statement_t *then_stmt;
-
-	int has_else_stmt;
-	statement_t *else_stmt;
-} condition_statement_t;
-
-typedef struct {
-	statement_t base;
-
-	expression_t loop_cond;
-	statement_t *loop_stmt;
-} iteration_statement_t;
-
-typedef struct {
-	 int a; //
-} expressions_t;
-
-typedef struct {
-	statement_t base;
-
-	char name[MAXSTRSIZE];
-	expressions_t exprs;
-} call_statement_t;
-
-typedef struct {
-	statement_t base;
-} input_statement_t;
-
-typedef struct {
-	statement_t base;
-} output_statement_t;
-
-typedef struct {
-	int a; //
-} simple_expression_t;
-
-typedef struct {
-	int a; //
-} term_t;
-
-typedef struct {
-	enum { EXPR_OFMT, STR_OFMT } kind;
-	expression_t expr;
-	char *str;
-} output_format_t;
-
-
-
-
 
 // operator -------------------------------------------------
 typedef enum {
@@ -183,7 +122,7 @@ typedef struct {
 typedef struct factor_t {
 	enum {
 		VAR_REF, CONST,
-		EXPR, NOT_FACTOR,
+		EXPR, INVERT_FACTOR,
 		STD_TYPE
 	} kind;
 
@@ -193,6 +132,14 @@ typedef struct factor_t {
 	struct factor_t *factor;
 	standard_type_t std_type;
 } factor_t;
+
+typedef struct { //[]
+	int a; //
+} term_t;
+
+typedef struct { //[]
+	int a; //
+} simple_expression_t;
 
 static int is_constant();
 static constant_t read_constant();
@@ -211,6 +158,13 @@ static expression_t read_expression();
 // ----------------------------------------------------------
 
 // assignment statement -------------------------------------
+typedef struct {
+	statement_t base;
+
+	variable_reference_t target;
+	expression_t expr;
+} assignment_statement_t;
+
 static int is_variable();
 static variable_reference_t read_variable();
 
@@ -222,11 +176,28 @@ static assignment_statement_t *read_assignment_statement();
 // ----------------------------------------------------------
 
 // condition statement --------------------------------------
+typedef struct { //[]
+	statement_t base;
+
+	expression_t branch_cond;
+	statement_t *then_stmt;
+
+	int has_else_stmt;
+	statement_t *else_stmt;
+} condition_statement_t;
+
 static int is_condition_statement();
 static condition_statement_t *read_condition_statement();
 // ----------------------------------------------------------
 
 // iteration statement --------------------------------------
+typedef struct { //[]
+	statement_t base;
+
+	expression_t loop_cond;
+	statement_t *loop_stmt;
+} iteration_statement_t;
+
 static int is_iteration_statement();
 static iteration_statement_t *read_iteration_statement();
 // ----------------------------------------------------------
@@ -237,6 +208,17 @@ static statement_t *read_exit_statement();
 // ----------------------------------------------------------
 
 // call statement -------------------------------------------
+typedef struct { //[]
+	 int a; //
+} expressions_t;
+
+typedef struct { //[]
+	statement_t base;
+
+	char name[MAXSTRSIZE];
+	expressions_t exprs;
+} call_statement_t;
+
 static expressions_t read_expressions();
 
 static int is_call_statement();
@@ -249,11 +231,27 @@ static statement_t *read_return_statement();
 // ----------------------------------------------------------
 
 // input statement ------------------------------------------
+typedef struct { //[]
+	statement_t base;
+} input_statement_t;
+
+
 static int is_input_statement();
 static input_statement_t *read_input_statement();
 // ----------------------------------------------------------
 
 // output statement -----------------------------------------
+typedef struct { //[]
+	enum { EXPR_OFMT, STR_OFMT } kind;
+	expression_t expr;
+	char *str;
+} output_format_t;
+
+typedef struct { //[]
+	statement_t base;
+} output_statement_t;
+
+
 static output_format_t read_output_format();
 
 static int is_output_statement();
