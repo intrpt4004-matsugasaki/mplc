@@ -495,10 +495,11 @@ static condition_statement_t *read_condition_statement() {
 	condition_statement_t *cond_stmt = malloc(sizeof(condition_statement_t));
 	cond_stmt->base.kind = CONDITION;
 	cond_stmt->base.next = NULL;
+	cond_stmt->has_else_stmt = 0;
 
 	read(TIF, "'if' is not found.");
 
-	cond_stmt->branch_cond = read_expression();
+	cond_stmt->cond = read_expression();
 
 	read(TTHEN, "'then' is not found.");
 
@@ -507,6 +508,7 @@ static condition_statement_t *read_condition_statement() {
 	if (is(TELSE)) {
 		read(TELSE, "'else' is not found.");
 
+		cond_stmt->has_else_stmt = 1;
 		cond_stmt->else_stmt = read_statement();
 	}
 
@@ -526,7 +528,7 @@ static iteration_statement_t *read_iteration_statement() {
 
 	read(TWHILE, "'while' is not found.");
 
-	iter_stmt->loop_cond = read_expression();
+	iter_stmt->cond = read_expression();
 
 	read(TDO, "'do' is not found.");
 
@@ -553,15 +555,22 @@ static statement_t *read_exit_statement() {
 // ----------------------------------------------------------
 
 // call statement -------------------------------------------
-static expressions_t read_expressions() {
-	expressions_t exprs;
+static expressions_t *read_expressions() {
+	expressions_t *exprs = malloc(sizeof(expressions_t));
+	exprs->next = NULL;
 
-	read_expression();
+	exprs->expr = read_expression();
 
+	expressions_t *last = exprs;
 	while (is(TCOMMA)) {
 		read(TCOMMA, "',' is not found.");
 
-		read_expression();
+		last->next = malloc(sizeof(expressions_t));
+		last->next->next = NULL;
+
+		last = last->next;
+
+		last->expr = read_expression();
 	}
 
 	return exprs;
@@ -584,7 +593,7 @@ static call_statement_t *read_call_statement() {
 	if (is(TLPAREN)) {
 		read(TLPAREN, "'(' is not found.");
 
-		call_stmt->exprs = read_expressions();
+		call_stmt->param = read_expressions();
 
 		read(TRPAREN, "')' is not found.");
 	}

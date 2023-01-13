@@ -176,10 +176,10 @@ static assignment_statement_t *read_assignment_statement();
 // ----------------------------------------------------------
 
 // condition statement --------------------------------------
-typedef struct { //[]
+typedef struct {
 	statement_t base;
 
-	expression_t branch_cond;
+	expression_t cond;
 	statement_t *then_stmt;
 
 	int has_else_stmt;
@@ -194,7 +194,7 @@ static condition_statement_t *read_condition_statement();
 typedef struct { //[]
 	statement_t base;
 
-	expression_t loop_cond;
+	expression_t cond;
 	statement_t *loop_stmt;
 } iteration_statement_t;
 
@@ -208,18 +208,19 @@ static statement_t *read_exit_statement();
 // ----------------------------------------------------------
 
 // call statement -------------------------------------------
-typedef struct { //[]
-	 int a; //
+typedef struct expressions_t {
+	expression_t expr;
+	struct expressions_t *next;
 } expressions_t;
 
-typedef struct { //[]
+typedef struct {
 	statement_t base;
 
 	char name[MAXSTRSIZE];
-	expressions_t exprs;
+	expressions_t *param;
 } call_statement_t;
 
-static expressions_t read_expressions();
+static expressions_t *read_expressions();
 
 static int is_call_statement();
 static call_statement_t *read_call_statement();

@@ -34,4 +34,21 @@ begin
 	qqq123[12] := cc * 2 + 3;
 
 	return;
+
+	if (true) then begin
+		break;
+		return;
+	end else begin
+		break;
+		return;
+	end
+	;
+
+	while (true) do begin
+		cc := 3;
+		return;
+	end
+	;
+
+	return;
 end.
