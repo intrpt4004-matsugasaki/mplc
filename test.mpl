@@ -10,14 +10,16 @@ end;
 
 var qqq123: array[32] of boolean;
 
-procedure ppp2(a: integer; c: boolean);
+procedure ppp2(az: integer; c: boolean);
 var waa, err: boolean;
 	ref: integer;
+	wef: integer;
+	bzb: char;
 begin
 	call ppp1;
 end;
 
-var a, bb: char;
+var ax, bbx: char;
 
 procedure ppp2x(yy: char; xx: array[122] of boolean);
 var wef: integer;
