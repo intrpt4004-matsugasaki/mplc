@@ -341,7 +341,8 @@ static factor_t read_factor() {
 		read(TLPAREN, "'(' is not found.");		
 
 		factor.kind = EXPR;
-		factor.expr = read_expression();
+		factor.expr = malloc(sizeof(expression_t));
+		*factor.expr = read_expression();
 
 		read(TRPAREN, "')' is not found.");
 
@@ -364,7 +365,8 @@ static factor_t read_factor() {
 
 		read(TLPAREN, "'(' is not found.");		
 
-		factor.expr = read_expression();
+		factor.expr = malloc(sizeof(expression_t));
+		*factor.expr = read_expression();
 
 		read(TRPAREN, "')' is not found.");
 
@@ -382,8 +384,7 @@ static term_t read_term() {
 	term_t term;
 	term.next = NULL;
 
-	term.factor = malloc(sizeof(factor_t));
-	*term.factor = read_factor();
+	term.factor = read_factor();
 
 	term_t *last = &term;
 	while (is_multiplicative_operator()) {
@@ -393,8 +394,7 @@ static term_t read_term() {
 		last = last->next;
 		last->next = NULL;
 
-		last->factor = malloc(sizeof(factor_t));
-		*last->factor = read_factor();
+		last->factor = read_factor();
 	}
 
 	return term;
@@ -416,15 +416,16 @@ static simple_expression_t read_simple_expression() {
 		simp_expr.prefix = NEGATIVE;
 	}
 
-	simp_expr.term = malloc(sizeof(term_t));
-	*simp_expr.term = read_term();
+	simp_expr.term = read_term();
 
 	simple_expression_t *last = &simp_expr;
 	while (is_additive_operator()) {
 		last->add_opr = read_additive_operator();
 
-		last->next = malloc(sizeof(term_t));
-		read_term();
+		last->next = malloc(sizeof(simple_expression_t));
+		last = last->next;
+
+		last->term = read_term();
 	}
 
 	return simp_expr;
@@ -470,7 +471,8 @@ static variable_indicator_t read_variable() {
 		read(TLSQPAREN, "'[' is not found.");
 
 		target.is_array = 1;
-		target.index = read_expression();
+		target.index = malloc(sizeof(expression_t));
+		*target.index = read_expression();
 
 		read(TRSQPAREN, "']' is not found.");
 	}
@@ -830,6 +832,10 @@ static statement_t *read_compound_statement() {
 /* --- procedure ---------------------------------------------------------------------- */
 static procedure_t *read_procedure_name() {
 	procedure_t *procedure = malloc(sizeof(procedure_t));
+	procedure->next = NULL;
+	procedure->param = NULL;
+	procedure->var = NULL;
+	procedure->stmt = NULL;
 
 	strcpy(procedure->name, token.string);
 	read(TNAME, "procedure name is not found.");
@@ -908,19 +914,18 @@ static procedure_t *read_subprogram_declaration() {
 static void read_block(program_t *program) {
 	while (is_variable_declaration() || is_subprogram_declaration()) {
 		if (is_variable_declaration()) {
-			if (program->var == NULL)
+			if (program->var == NULL) {
 				program->var = read_variable_declaration();
-			else {
+			} else {
 				variable_t *last = program->var;
 				for (; last->next != NULL; last = last->next);
 				last->next = read_variable_declaration();
 			}
-		}
 
-		if (is_subprogram_declaration()) {
-			if (program->proc == NULL)
+		} else if (is_subprogram_declaration()) {
+			if (program->proc == NULL) {
 				program->proc = read_subprogram_declaration();
-			else {
+			} else {
 				procedure_t *last = program->proc;
 				for (; last->next != NULL; last = last->next);
 				last->next = read_subprogram_declaration();

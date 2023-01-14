@@ -97,23 +97,6 @@ static relational_operator_t read_relational_operator();
 // ----------------------------------------------------------
 
 // expression -----------------------------------------------
-struct term_t;
-
-typedef struct {
-	enum { POSITIVE, NEGATIVE } prefix;
-	struct term_t *term;
-
-	additive_operator_t add_opr;
-	struct term_t *next;
-} simple_expression_t;
-
-typedef struct expression_t {
-	simple_expression_t simp_expr;
-
-	relational_operator_t rel_opr;
-	struct expression_t *next;
-} expression_t;
-
 typedef struct {
 	enum {
 		NUMBER,
@@ -125,11 +108,13 @@ typedef struct {
 	char string[MAXSTRSIZE];
 } constant_t;
 
+struct expression_t;
+
 typedef struct {
 	char name[MAXSTRSIZE];
 
 	int is_array;
-	expression_t index;
+	struct expression_t *index;
 } variable_indicator_t;
 
 typedef struct factor_t {
@@ -141,17 +126,32 @@ typedef struct factor_t {
 
 	variable_indicator_t var_idr;
 	constant_t cons;
-	expression_t expr;
+	struct expression_t *expr;
 	struct factor_t *next;
 	standard_type_t std_type;
 } factor_t;
 
 typedef struct term_t {
-	struct factor_t *factor;
+	factor_t factor;
 
 	multiplicative_operator_t mul_opr;
 	struct term_t *next;
 } term_t;
+
+typedef struct simple_expression_t {
+	enum { POSITIVE, NEGATIVE } prefix;
+	term_t term;
+
+	additive_operator_t add_opr;
+	struct simple_expression_t *next;
+} simple_expression_t;
+
+typedef struct expression_t {
+	simple_expression_t simp_expr;
+
+	relational_operator_t rel_opr;
+	struct expression_t *next;
+} expression_t;
 
 static int is_constant();
 static constant_t read_constant();
