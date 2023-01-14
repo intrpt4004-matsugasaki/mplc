@@ -97,21 +97,14 @@ static relational_operator_t read_relational_operator();
 // ----------------------------------------------------------
 
 // expression -----------------------------------------------
-struct factor_t;
-
-typedef struct {
-	struct factor_t *factor;
-
-	multiplicative_operator_t mul_opr;
-	struct factor_t *next;
-} term_t;
+struct term_t;
 
 typedef struct {
 	enum { POSITIVE, NEGATIVE } prefix;
-	term_t term;
+	struct term_t *left;
 
 	additive_operator_t add_opr;
-	term_t *next;
+	struct term_t *right;
 } simple_expression_t;
 
 typedef struct expression_t {
@@ -129,7 +122,7 @@ typedef struct {
 	} kind;
 
 	int number;
-	char *string;
+	char string[MAXSTRSIZE];
 } constant_t;
 
 typedef struct {
@@ -148,10 +141,17 @@ typedef struct factor_t {
 
 	variable_indicator_t var_idr;
 	constant_t cons;
-	expression_t *expr;
-	struct factor_t *factor;
+	expression_t expr;
+	struct factor_t *next;
 	standard_type_t std_type;
 } factor_t;
+
+typedef struct term_t {
+	struct factor_t *factor;
+
+	multiplicative_operator_t mul_opr;
+	struct term_t *next;
+} term_t;
 
 static int is_constant();
 static constant_t read_constant();

@@ -352,8 +352,8 @@ static factor_t read_factor() {
 		read(TNOT, "'not' is not found.");		
 
 		factor.kind = INVERT_FACTOR;
-		factor.factor = malloc(sizeof(factor_t));
-		*factor.factor = read_factor();
+		factor.next = malloc(sizeof(factor_t));
+		*factor.next = read_factor();
 		return factor;
 	}
 
@@ -380,13 +380,21 @@ static int is_term() {
 
 static term_t read_term() {
 	term_t term;
+	term.next = NULL;
 
-	read_factor();
+	term.factor = malloc(sizeof(factor_t));
+	*term.factor = read_factor();
 
+	term_t *last = &term;
 	while (is_multiplicative_operator()) {
-		read_multiplicative_operator();
+		last->mul_opr = read_multiplicative_operator();
 
-		read_factor();
+		last->next = malloc(sizeof(term_t));
+		last = last->next;
+		last->next = NULL;
+
+		last->factor = malloc(sizeof(factor_t));
+		*last->factor = read_factor();
 	}
 
 	return term;
@@ -397,19 +405,25 @@ static int is_simple_expression() {
 }
 
 static simple_expression_t read_simple_expression() {
-	simple_expression_t simple_expr;
+	simple_expression_t simp_expr;
+	simp_expr.next = NULL;
 
-	if (is(TPLUS))
-		read(TPLUS, "'+' is not found.");		
-
-	if (is(TMINUS))
+	if (is(TPLUS)) {
+		read(TPLUS, "'+' is not found.");
+		simp_expr.prefix = POSITIVE;
+	} else if (is(TMINUS)) {
 		read(TMINUS, "'-' is not found.");		
+		simp_expr.prefix = NEGATIVE;
+	}
 
-	read_term();
+	simp_expr.term = malloc(sizeof(term_t));
+	*simp_expr.term = read_term();
 
+	simple_expression_t *last = &simp_expr;
 	while (is_additive_operator()) {
-		read_additive_operator();
+		last->add_opr = read_additive_operator();
 
+		last->next = malloc(sizeof(term_t));
 		read_term();
 	}
 
