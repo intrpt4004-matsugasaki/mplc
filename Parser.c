@@ -326,8 +326,8 @@ static factor_t read_factor() {
 	factor_t factor;
 
 	if (is_variable()) {
-		factor.kind = VAR_REF;
-		factor.var_ref = read_variable();
+		factor.kind = VAR_IDR;
+		factor.var_idr = read_variable();
 		return factor;
 	}
 
@@ -440,8 +440,8 @@ static int is_variable() {
 	return is_variable_name();
 }
 
-static variable_reference_t read_variable() {
-	variable_reference_t target;
+static variable_indicator_t read_variable() {
+	variable_indicator_t target;
 	target.is_array = 0;
 	
 	variable_t *variable = read_variable_name();
@@ -463,7 +463,7 @@ static int is_left_part() {
 	return is_variable();
 }
 
-static variable_reference_t read_left_part() {
+static variable_indicator_t read_left_part() {
 	return read_variable();
 }
 
@@ -615,7 +615,8 @@ static statement_t *read_return_statement() {
 	read(TRETURN, "'return' is not found.");
 
 	return stmt;
-}// ----------------------------------------------------------
+}
+// ----------------------------------------------------------
 
 // input statement ------------------------------------------
 static int is_input_statement() {
@@ -623,13 +624,17 @@ static int is_input_statement() {
 }
 
 static input_statement_t *read_input_statement() {
-	input_statement_t *input_stmt;
+	input_statement_t *input_stmt = malloc(sizeof(input_statement_t));
+	input_stmt->base.kind = INPUT;
+	input_stmt->base.next = NULL;
 
 	if (is(TREAD)) {
 		read(TREAD, "'read' is not found.");
+		input_stmt->lined = 0;
 
 	} else if (is(TREADLN)) {
 		read(TREADLN, "'readln' is not found.");
+		input_stmt->lined = 1;
 
 	} else
 		error("unmatched on read_input_statement.");
@@ -637,11 +642,19 @@ static input_statement_t *read_input_statement() {
 	if (is(TLPAREN)) {
 		read(TLPAREN, "'(' is not found.");
 
-		read_variable();
+		input_stmt->target = malloc(sizeof(variable_indicators_t));
+		input_stmt->target->next = NULL;
+		input_stmt->target->var = read_variable();
 
+		variable_indicators_t *last = input_stmt->target;
 		while (is(TCOMMA)) {
 			read(TCOMMA, "',' is not found.");
-			read_variable();
+
+			last->next = malloc(sizeof(variable_indicators_t));
+			last = last->next;
+			last->next = NULL;
+
+			last->var = read_variable();
 		}
 
 		read(TRPAREN, "')' is not found.");

@@ -80,7 +80,12 @@ typedef struct {
 
 	int is_array;
 	expression_t index;
-} variable_reference_t;
+} variable_indicator_t;
+
+typedef struct variable_indicators_t {
+	variable_indicator_t var;
+	struct variable_indicators_t *next;
+} variable_indicators_t;
 
 // operator -------------------------------------------------
 typedef enum {
@@ -121,12 +126,12 @@ typedef struct {
 
 typedef struct factor_t {
 	enum {
-		VAR_REF, CONST,
+		VAR_IDR, CONST,
 		EXPR, INVERT_FACTOR,
 		STD_TYPE
 	} kind;
 
-	variable_reference_t var_ref;
+	variable_indicator_t var_idr;
 	constant_t cons;
 	expression_t expr;
 	struct factor_t *factor;
@@ -161,15 +166,15 @@ static expression_t read_expression();
 typedef struct {
 	statement_t base;
 
-	variable_reference_t target;
+	variable_indicator_t target;
 	expression_t expr;
 } assignment_statement_t;
 
 static int is_variable();
-static variable_reference_t read_variable();
+static variable_indicator_t read_variable();
 
 static int is_left_part();
-static variable_reference_t read_left_part();
+static variable_indicator_t read_left_part();
 
 static int is_assignment_statement();
 static assignment_statement_t *read_assignment_statement();
@@ -191,7 +196,7 @@ static condition_statement_t *read_condition_statement();
 // ----------------------------------------------------------
 
 // iteration statement --------------------------------------
-typedef struct { //[]
+typedef struct {
 	statement_t base;
 
 	expression_t cond;
@@ -232,10 +237,12 @@ static statement_t *read_return_statement();
 // ----------------------------------------------------------
 
 // input statement ------------------------------------------
-typedef struct { //[]
+typedef struct {
 	statement_t base;
-} input_statement_t;
 
+	int lined;
+	variable_indicators_t *target;
+} input_statement_t;
 
 static int is_input_statement();
 static input_statement_t *read_input_statement();
@@ -243,9 +250,9 @@ static input_statement_t *read_input_statement();
 
 // output statement -----------------------------------------
 typedef struct { //[]
-	enum { EXPR_OFMT, STR_OFMT } kind;
+	enum { EXPR_MODE, STR_MODE } kind;
 	expression_t expr;
-	char *str;
+	char *string;
 } output_format_t;
 
 typedef struct { //[]

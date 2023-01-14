@@ -50,5 +50,8 @@ begin
 	end
 	;
 
+	read(a, b, c);
+	readln(asx);
+
 	return;
 end.
