@@ -427,7 +427,7 @@ static simple_expression_t read_simple_expression() {
 		read_term();
 	}
 
-	return simple_expr;
+	return simp_expr;
 }
 
 static int is_expression() {
@@ -437,12 +437,17 @@ static int is_expression() {
 static expression_t read_expression() {
 	expression_t expr;
 
-	read_simple_expression();
+	expr.simp_expr = read_simple_expression();
 
+	expression_t *last = &expr;
 	while (is_relational_operator()) {
-		read_relational_operator();
+		last->rel_opr = read_relational_operator();
 
-		read_simple_expression();
+		last->next = malloc(sizeof(expression_t));
+		last = last->next;
+		last->next = NULL;
+
+		last->simp_expr = read_simple_expression();
 	}
 
 	return expr;

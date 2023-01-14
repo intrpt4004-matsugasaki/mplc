@@ -101,10 +101,10 @@ struct term_t;
 
 typedef struct {
 	enum { POSITIVE, NEGATIVE } prefix;
-	struct term_t *left;
+	struct term_t *term;
 
 	additive_operator_t add_opr;
-	struct term_t *right;
+	struct term_t *next;
 } simple_expression_t;
 
 typedef struct expression_t {
