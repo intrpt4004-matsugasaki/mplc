@@ -1,7 +1,57 @@
 #include "SemanticAnalyzer.h"
 
+static void error(char *message) {
+	printf("[ERROR] SemanticAnalyzer: %s\n", message);
+	exit(-1);
+}
+
+static void there_is_no_overloaded_name(program_t program) {
+	// program block
+	for (variable_t *v = program.var; v != NULL; v = v->next) {
+		if (v->next == NULL)
+			break;
+
+		for (variable_t *w = v->next; w != NULL; w = w->next) {
+			if (!strcmp(v->name, w->name)) {
+				char tmp[MAXSTRSIZE];
+				sprintf(tmp, "overloaded name: %s", v->name);
+				error(tmp);
+			}
+		}
+	}
+
+	// procedure block
+}
+
+static int is_variables_declared(program_t program, char *var_name) {
+	for (variable_t *v = program.var; v != NULL; v = v->next) {
+		if (!strcmp(v->name, var_name))
+			return 1;
+	}
+	return 0;
+}
+
+static int is_procedures_declared(program_t program, char *proc_name) {
+	for (procedure_t *p = program.proc; p != NULL; p = p->next) {
+		if (!strcmp(p->name, proc_name))
+			return 1;
+	}
+	return 0;
+}
+
+static int is_variables_declared_in_procedure(program_t program, char *proc_name, char *var_name) {
+	for (procedure_t *p = program.proc; p != NULL; p = p->next) {
+		if (!strcmp(p->name, proc_name)) {
+			return 0;
+		}
+	}
+	return -1;
+}
+
 extern void semantic_analyze(program_t program) {
-	print_xref_table(program);
+	there_is_no_overloaded_name(program);
+
+//	print_xref_table(program);
 }
 
 static char *stdtype_to_str(standard_type_t stdtype) {

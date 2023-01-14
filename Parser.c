@@ -8,7 +8,7 @@ static void update_token() {
 	strcpy(token.string, string_attr);
 	token.number = num_attr;
 
-	if (token.code != -1) printf("%s ", tokencode_to_str(token.code));
+	//if (token.code != -1) printf("%s ", tokencode_to_str(token.code));
 }
 
 static int is(const int TOKEN_CODE) {
@@ -830,17 +830,9 @@ static statement_t *read_compound_statement() {
 /* ------------------------------------------------------------------------------------ */
 
 /* --- procedure ---------------------------------------------------------------------- */
-static procedure_t *read_procedure_name() {
-	procedure_t *procedure = malloc(sizeof(procedure_t));
-	procedure->next = NULL;
-	procedure->param = NULL;
-	procedure->var = NULL;
-	procedure->stmt = NULL;
-
+static void read_procedure_name(procedure_t *procedure) {
 	strcpy(procedure->name, token.string);
 	read(TNAME, "procedure name is not found.");
-
-	return procedure;
 }
 
 static int is_formal_parameters() {
@@ -888,11 +880,15 @@ static int is_subprogram_declaration() {
 }
 
 static procedure_t *read_subprogram_declaration() {
-	procedure_t *procedure;
+	procedure_t *procedure = malloc(sizeof(procedure_t));
+	procedure->next = NULL;
+	procedure->param = NULL;
+	procedure->var = NULL;
+	procedure->stmt = NULL;
 
 	read(TPROCEDURE, "'procedure' not found.");
 
-	procedure = read_procedure_name();
+	read_procedure_name(procedure);
 
 	if (is_formal_parameters())
 		procedure->param = read_formal_parameters();

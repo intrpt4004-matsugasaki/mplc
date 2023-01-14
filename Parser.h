@@ -313,7 +313,7 @@ typedef struct procedure_t {
 	struct procedure_t *next;
 } procedure_t;
 
-static procedure_t *read_procedure_name();
+static void read_procedure_name(procedure_t *procedure);
 
 static int is_formal_parameters();
 static variable_t *read_formal_parameters();
