@@ -667,24 +667,24 @@ static input_statement_t *read_input_statement() {
 // output statement -----------------------------------------
 static output_format_t read_output_format() {
 	output_format_t format;
+	format.has_expr_num = 0;
 
 	if (is_expression()) {
-		format.kind = EXPR_OFMT;
+		format.kind = EXPR_MODE;
 		format.expr = read_expression();
 
 		if (is(TCOLON)) {
 			read(TCOLON, "':' is not found.");
-			
-//			format.expr_num = malloc(sizeof(int));
-//			*format.expr_num = token.num;
+
+			format.has_expr_num = 1;
+			format.expr_num = token.number;
 			read(TNUMBER, "number is not found.");
 		}
 
 	} else if (is(TSTRING)) {
-		format.kind = STR_OFMT;
+		format.kind = STR_MODE;
 
-		format.str = malloc(sizeof(char) * MAXSTRSIZE);
-		strcpy(format.str, token.string);
+		strcpy(format.string, token.string);
 		read(TSTRING, "string is not found.");
 
 	} else {
@@ -699,13 +699,17 @@ static int is_output_statement() {
 }
 
 static output_statement_t *read_output_statement() {
-	output_statement_t *output_stmt;
+	output_statement_t *output_stmt = malloc(sizeof(output_statement_t));
+	output_stmt->base.kind = OUTPUT;
+	output_stmt->base.next = NULL;
 
 	if (is(TWRITE)) {
 		read(TWRITE, "'write' is not found.");
+		output_stmt->lined = 0;
 
 	} else if (is(TWRITELN)) {
 		read(TWRITELN, "'writeln' is not found.");
+		output_stmt->lined = 1;
 
 	} else
 		error("unmatched on read_output_statement.");
@@ -713,11 +717,19 @@ static output_statement_t *read_output_statement() {
 	if (is(TLPAREN)) {
 		read(TLPAREN, "'(' is not found.");
 
-		read_output_format();
+		output_stmt->format = malloc(sizeof(output_formats_t));
+		output_stmt->format->next = NULL;
+		output_stmt->format->format = read_output_format();
 
+		output_formats_t *last = output_stmt->format;
 		while (is(TCOMMA)) {
 			read(TCOMMA, "',' is not found.");
-			read_output_format();
+
+			last->next = malloc(sizeof(output_formats_t));
+			last = last->next;
+			last->next = NULL;
+
+			last->format = read_output_format();
 		}
 
 		read(TRPAREN, "')' is not found.");

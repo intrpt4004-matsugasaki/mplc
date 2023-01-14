@@ -14,6 +14,7 @@
 #include "Scanner.h"
 #include "Parser.h"
 #include "SemanticAnalyzer.h"
+//#include "CodeOptimizer.h"
 //#include "CodeGenerator.h"
 
 int main(const int argc, char *argv[]) {
@@ -31,6 +32,7 @@ int main(const int argc, char *argv[]) {
 
 	program_t p = parse_program();
 	semantic_analyze(p);
+	// p = optimize_code(p);
 
 	/*
 	char obj[MAXSTRSIZE];

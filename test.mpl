@@ -22,7 +22,8 @@ var a, bb: char;
 procedure ppp2x(yy: char; xx: array[122] of boolean);
 var wef: integer;
 begin
-	return;
+{	writeln('a');
+}	return;
 end;
 
 begin
@@ -53,5 +54,12 @@ begin
 	read(a, b, c);
 	readln(asx);
 
+	write(a, b, c);
+	write('aaa');
+	writeln(asx);
+	writeln('ccc ccc');
+
 	return;
 end.
+
+/* BUG: output string in procedure */

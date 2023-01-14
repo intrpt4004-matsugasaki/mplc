@@ -71,22 +71,6 @@ typedef struct statement_t {
 	struct statement_t *next;
 } statement_t;
 
-typedef struct { //[]
-	int a; //
-} expression_t;
-
-typedef struct {
-	char name[MAXSTRSIZE];
-
-	int is_array;
-	expression_t index;
-} variable_indicator_t;
-
-typedef struct variable_indicators_t {
-	variable_indicator_t var;
-	struct variable_indicators_t *next;
-} variable_indicators_t;
-
 // operator -------------------------------------------------
 typedef enum {
 	PLUS, MINUS, OR
@@ -113,6 +97,30 @@ static relational_operator_t read_relational_operator();
 // ----------------------------------------------------------
 
 // expression -----------------------------------------------
+struct factor_t;
+
+typedef struct {
+	struct factor_t *factor;
+
+	multiplicative_operator_t mul_opr;
+	struct factor_t *next;
+} term_t;
+
+typedef struct {
+	enum { POSITIVE, NEGATIVE } prefix;
+	term_t term;
+
+	additive_operator_t add_opr;
+	term_t *next;
+} simple_expression_t;
+
+typedef struct expression_t {
+	simple_expression_t simp_expr;
+
+	relational_operator_t rel_opr;
+	struct expression_t *next;
+} expression_t;
+
 typedef struct {
 	enum {
 		NUMBER,
@@ -124,6 +132,13 @@ typedef struct {
 	char *string;
 } constant_t;
 
+typedef struct {
+	char name[MAXSTRSIZE];
+
+	int is_array;
+	expression_t index;
+} variable_indicator_t;
+
 typedef struct factor_t {
 	enum {
 		VAR_IDR, CONST,
@@ -133,18 +148,10 @@ typedef struct factor_t {
 
 	variable_indicator_t var_idr;
 	constant_t cons;
-	expression_t expr;
+	expression_t *expr;
 	struct factor_t *factor;
 	standard_type_t std_type;
 } factor_t;
-
-typedef struct { //[]
-	int a; //
-} term_t;
-
-typedef struct { //[]
-	int a; //
-} simple_expression_t;
 
 static int is_constant();
 static constant_t read_constant();
@@ -237,6 +244,11 @@ static statement_t *read_return_statement();
 // ----------------------------------------------------------
 
 // input statement ------------------------------------------
+typedef struct variable_indicators_t {
+	variable_indicator_t var;
+	struct variable_indicators_t *next;
+} variable_indicators_t;
+
 typedef struct {
 	statement_t base;
 
@@ -249,16 +261,27 @@ static input_statement_t *read_input_statement();
 // ----------------------------------------------------------
 
 // output statement -----------------------------------------
-typedef struct { //[]
+typedef struct {
 	enum { EXPR_MODE, STR_MODE } kind;
+
 	expression_t expr;
-	char *string;
+	int has_expr_num;
+	int expr_num;
+
+	char string[MAXSTRSIZE];
 } output_format_t;
 
-typedef struct { //[]
-	statement_t base;
-} output_statement_t;
+typedef struct output_formats_t {
+	output_format_t format;
+	struct output_formats_t *next;
+} output_formats_t;
 
+typedef struct {
+	statement_t base;
+
+	int lined;
+	output_formats_t *format;
+} output_statement_t;
 
 static output_format_t read_output_format();
 
