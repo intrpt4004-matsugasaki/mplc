@@ -39,6 +39,9 @@ static variable_t *read_variable_name() {
 	variable_t *variable = malloc(sizeof(variable_t));
 	variable->next = NULL;
 
+	/* for xref tbl */
+	variable->_DEF_LINE_NUM = get_linenum();
+
 	strcpy(variable->name, token.string);
 	read(TNAME, "variable name is not found.");
 
@@ -466,6 +469,9 @@ static variable_indicator_t read_variable() {
 	
 	variable_t *variable = read_variable_name();
 	strcpy(target.name, variable->name);
+
+	/*for xref tbl*/
+	target._DEF_LINE_NUM = variable->_DEF_LINE_NUM;
 
 	if (is(TLSQPAREN)) {
 		read(TLSQPAREN, "'[' is not found.");
