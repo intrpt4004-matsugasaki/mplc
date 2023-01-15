@@ -39,8 +39,8 @@ static variable_t *read_variable_name() {
 	variable_t *variable = malloc(sizeof(variable_t));
 	variable->next = NULL;
 
-	/* for xref tbl */
-	variable->_DEF_LINE_NUM = get_linenum();
+	/* debug information */
+	variable->DEF_LINE_NUM = get_linenum();
 
 	strcpy(variable->name, token.string);
 	read(TNAME, "variable name is not found.");
@@ -440,6 +440,7 @@ static int is_expression() {
 
 static expression_t read_expression() {
 	expression_t expr;
+	expr.next = NULL;
 
 	expr.simp_expr = read_simple_expression();
 
@@ -471,8 +472,8 @@ static variable_indicator_t read_variable() {
 	variable_t *variable = read_variable_name();
 	strcpy(target.name, variable->name);
 
-	/*for xref tbl*/
-	target._DEF_LINE_NUM = variable->_DEF_LINE_NUM;
+	/* debug information */
+	target.APR_LINE_NUM = get_linenum();
 
 	if (is(TLSQPAREN)) {
 		read(TLSQPAREN, "'[' is not found.");
@@ -897,8 +898,8 @@ static procedure_t *read_subprogram_declaration() {
 
 	read_procedure_name(procedure);
 
-	/*for xref tbl*/
-	procedure->_DEF_LINE_NUM = get_linenum();
+	/* debug information */
+	procedure->DEF_LINE_NUM = get_linenum();
 
 	if (is_formal_parameters())
 		procedure->param = read_formal_parameters();

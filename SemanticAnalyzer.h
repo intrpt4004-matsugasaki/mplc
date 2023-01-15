@@ -8,8 +8,16 @@ static void error(char *message);
 
 static void there_is_no_overloaded_name(program_t program);
 
-static void variable_declared(program_t program, char *var_name);
+typedef struct {
+	enum { PROGRAM, PROCEDURE } kind;
+	char proc_name[MAXSTRSIZE];
+} REF_SCOPE;
+
+static void variable_declared(program_t program, REF_SCOPE scope, char *var_name);
 static void procedure_declared(program_t program, char *proc_name);
+static void name_declared_in_factor(program_t program, factor_t factor);
+static void name_declared_in_term(program_t program, term_t term);
+static void name_declared_in_simple_expression(program_t program, simple_expression_t simp_expr);
 static void name_declared_in_expression(program_t program, expression_t expr);
 static void name_declared_in_expressions(program_t program, expressions_t *exprs);
 static void name_declared_in_variable_indicator(program_t program, variable_indicator_t idr);

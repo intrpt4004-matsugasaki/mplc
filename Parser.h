@@ -37,8 +37,8 @@ typedef struct variable_t {
 	char name[MAXSTRSIZE];
 	type_t type;
 
-	/* for xref tbl */
-	int _DEF_LINE_NUM;
+	/* debug information */
+	int DEF_LINE_NUM;
 
 	struct variable_t *next;
 } variable_t;
@@ -119,8 +119,8 @@ typedef struct {
 	int is_array;
 	struct expression_t *index;
 
-	/* for xref tbl */
-	int _DEF_LINE_NUM;
+	/* debug information */
+	int APR_LINE_NUM;
 } variable_indicator_t;
 
 typedef struct factor_t {
@@ -316,8 +316,8 @@ typedef struct procedure_t {
 	variable_t *var;
 	statement_t *stmt;
 
-	/* for xref tbl */
-	int _DEF_LINE_NUM;
+	/* debug information */
+	int DEF_LINE_NUM;
 
 	struct procedure_t *next;
 } procedure_t;

@@ -44,12 +44,16 @@ static void there_is_no_overloaded_name(program_t program) {
 	}
 }
 
-static void variable_declared(program_t program, char *var_name) {
+static void variable_declared(program_t program, REF_SCOPE scope, char *var_name) {
 	variable_t *v;
 	for (v = program.var; v != NULL; v = v->next) {
 		if (!strcmp(v->name, var_name)) {
 			return;
 		}
+	}
+
+	if (scope.kind == PROCEDURE) {
+		
 	}
 
 	char tmp[MAXSTRSIZE];
@@ -70,8 +74,35 @@ static void procedure_declared(program_t program, char *proc_name) {
 	error(tmp);
 }
 
+static void name_declared_in_factor(program_t program, factor_t factor) {
+	if (factor.kind == VAR_IDR) {
+		name_declared_in_variable_indicator(program, factor.var_idr);
+	} else if (factor.kind == EXPR) {
+		name_declared_in_expression(program, *factor.expr);
+	} else if (factor.kind == INVERT_FACTOR) {
+		name_declared_in_factor(program, *factor.next);
+	}
+}
+
+static void name_declared_in_term(program_t program, term_t term) {
+	name_declared_in_factor(program, term.factor);
+
+	if (term.next != NULL)
+		name_declared_in_term(program, *term.next);
+}
+
+static void name_declared_in_simple_expression(program_t program, simple_expression_t simp_expr) {
+	name_declared_in_term(program, simp_expr.term);
+
+	if (simp_expr.next != NULL)
+		name_declared_in_simple_expression(program, *simp_expr.next);
+}
+
 static void name_declared_in_expression(program_t program, expression_t expr) {
-	printf("expr\n");
+	name_declared_in_simple_expression(program, expr.simp_expr);
+
+	if (expr.next != NULL)
+		name_declared_in_expression(program, *expr.next);
 }
 
 static void name_declared_in_expressions(program_t program, expressions_t *exprs) {
@@ -221,7 +252,7 @@ static void print_xref_table(program_t program) {
 		int len = dump_type(v->type);
 		for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
 
-		printf("%d", v->_DEF_LINE_NUM);
+		printf("%d", v->DEF_LINE_NUM);
 
 		printf("\n");
 	}
@@ -243,7 +274,7 @@ static void print_xref_table(program_t program) {
 		printf(")");
 		for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
 
-		printf("%d", p->_DEF_LINE_NUM);
+		printf("%d", p->DEF_LINE_NUM);
 		printf("\n");
 
 		for (variable_t *pp = p->param; pp != NULL; pp = pp->next) {
@@ -252,6 +283,8 @@ static void print_xref_table(program_t program) {
 
 			int len = dump_type(pp->type);
 			for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
+
+			printf("%d", pp->DEF_LINE_NUM);
 
 			printf("\n");
 		}
@@ -263,7 +296,7 @@ static void print_xref_table(program_t program) {
 			int len = dump_type(pv->type);
 			for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
 
-			printf("%d", pv->_DEF_LINE_NUM);
+			printf("%d", pv->DEF_LINE_NUM);
 
 			printf("\n");
 		}
