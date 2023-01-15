@@ -466,6 +466,7 @@ static int is_variable() {
 static variable_indicator_t read_variable() {
 	variable_indicator_t target;
 	target.is_array = 0;
+	target.index = NULL;
 	
 	variable_t *variable = read_variable_name();
 	strcpy(target.name, variable->name);
@@ -895,6 +896,9 @@ static procedure_t *read_subprogram_declaration() {
 	read(TPROCEDURE, "'procedure' not found.");
 
 	read_procedure_name(procedure);
+
+	/*for xref tbl*/
+	procedure->_DEF_LINE_NUM = get_linenum();
 
 	if (is_formal_parameters())
 		procedure->param = read_formal_parameters();

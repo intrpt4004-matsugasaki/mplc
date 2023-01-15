@@ -316,6 +316,9 @@ typedef struct procedure_t {
 	variable_t *var;
 	statement_t *stmt;
 
+	/* for xref tbl */
+	int _DEF_LINE_NUM;
+
 	struct procedure_t *next;
 } procedure_t;
 
