@@ -28,6 +28,13 @@ static void there_is_no_undeclared_name(program_t program);
 extern void name_analyze(program_t program);
 extern void type_analyze(program_t program);
 
+typedef struct {
+	char name[MAXSTRSIZE];
+	// type
+	int def_line_num;
+	int *apr_line_num;
+} SymbolTable;
+
 static char *standard_type_t_to_str(standard_type_t stdtype);
 static int print_type_and_get_length(type_t type);
 extern void print_xref_table(program_t program);

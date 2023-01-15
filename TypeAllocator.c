@@ -1,14 +1,14 @@
 #include "TypeAllocator.h"
 
 static void allocate_type_in_constant(constant_t *cons) {
-	if (cons->kind == NUMBER) {
+/*	if (cons->kind == NUMBER) {
 		cons->TYPE = INTEGER;
 	} else if (cons->kind == FALSE || cons->kind == TRUE) {
 		cons->TYPE = BOOLEAN;
 	} else if (cons->kind == STRING) {
 		cons->TYPE = STRING;
 	}
-}
+*/}
 
 /*
 static void variable_declared(program_t program, REF_SCOPE scope, variable_indicator_t var_idr) {

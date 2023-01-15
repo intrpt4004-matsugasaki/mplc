@@ -369,4 +369,3 @@ extern program_t parse_program();
 #endif
 
 /* TODO: ~s type -> pointer of pointer */
-/* TODO: ~.next -> pointer of pointer */
