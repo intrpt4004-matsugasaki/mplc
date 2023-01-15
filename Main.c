@@ -3,7 +3,8 @@
  *                                          *
  * $ gcc -std=c99 -pedantic                 *
  *        Main.c Scanner.c Parser.c         *
- *             SemanticAnalyzer.c -o cr     *
+ *             SemanticAnalyzer.c           *
+ *                  TypeAllocator.c -o cr   *
  *                                          *
  *                     gcc version: 12.2.0  *
  ********************************************/
@@ -14,6 +15,7 @@
 #include "Scanner.h"
 #include "Parser.h"
 #include "SemanticAnalyzer.h"
+#include "TypeAllocator.h"
 //#include "CodeOptimizer.h"
 //#include "CodeGenerator.h"
 
@@ -31,8 +33,12 @@ int main(const int argc, char *argv[]) {
 	}
 
 	program_t p = parse_program();
-	semantic_analyze(p);
-	// p = optimize_code(p);
+	name_analyze(p);
+	allocate_type(&p);
+	type_analyze(p);
+	print_xref_table(p);
+
+	// optimize_code(&p);
 
 	/*
 	char obj[MAXSTRSIZE];

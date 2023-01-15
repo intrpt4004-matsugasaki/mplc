@@ -465,27 +465,27 @@ static int is_variable() {
 }
 
 static variable_indicator_t read_variable() {
-	variable_indicator_t target;
-	target.is_array = 0;
-	target.index = NULL;
+	variable_indicator_t target_var_idr;
+	target_var_idr.is_array = 0;
+	target_var_idr.index = NULL;
 	
 	variable_t *variable = read_variable_name();
-	strcpy(target.name, variable->name);
+	strcpy(target_var_idr.name, variable->name);
 
 	/* debug information */
-	target.APR_LINE_NUM = get_linenum();
+	target_var_idr.APR_LINE_NUM = get_linenum();
 
 	if (is(TLSQPAREN)) {
 		read(TLSQPAREN, "'[' is not found.");
 
-		target.is_array = 1;
-		target.index = malloc(sizeof(expression_t));
-		*target.index = read_expression();
+		target_var_idr.is_array = 1;
+		target_var_idr.index = malloc(sizeof(expression_t));
+		*target_var_idr.index = read_expression();
 
 		read(TRSQPAREN, "']' is not found.");
 	}
 
-	return target;
+	return target_var_idr;
 }
 
 static int is_left_part() {
@@ -505,7 +505,7 @@ static assignment_statement_t *read_assignment_statement() {
 	assn_stmt->base.kind = ASSIGN;
 	assn_stmt->base.next = NULL;
 
-	assn_stmt->target = read_left_part();
+	assn_stmt->target_var_idr = read_left_part();
 
 	read(TASSIGN, "':=' is not found.");
 
@@ -671,11 +671,11 @@ static input_statement_t *read_input_statement() {
 	if (is(TLPAREN)) {
 		read(TLPAREN, "'(' is not found.");
 
-		input_stmt->target = malloc(sizeof(variable_indicators_t));
-		input_stmt->target->next = NULL;
-		input_stmt->target->var = read_variable();
+		input_stmt->target_var_idrs = malloc(sizeof(variable_indicators_t));
+		input_stmt->target_var_idrs->next = NULL;
+		input_stmt->target_var_idrs->var_idr = read_variable();
 
-		variable_indicators_t *last = input_stmt->target;
+		variable_indicators_t *last = input_stmt->target_var_idrs;
 		while (is(TCOMMA)) {
 			read(TCOMMA, "',' is not found.");
 
@@ -683,7 +683,7 @@ static input_statement_t *read_input_statement() {
 			last = last->next;
 			last->next = NULL;
 
-			last->var = read_variable();
+			last->var_idr = read_variable();
 		}
 
 		read(TRPAREN, "')' is not found.");
@@ -746,11 +746,11 @@ static output_statement_t *read_output_statement() {
 	if (is(TLPAREN)) {
 		read(TLPAREN, "'(' is not found.");
 
-		output_stmt->format = malloc(sizeof(output_formats_t));
-		output_stmt->format->next = NULL;
-		output_stmt->format->format = read_output_format();
+		output_stmt->formats = malloc(sizeof(output_formats_t));
+		output_stmt->formats->next = NULL;
+		output_stmt->formats->format = read_output_format();
 
-		output_formats_t *last = output_stmt->format;
+		output_formats_t *last = output_stmt->formats;
 		while (is(TCOMMA)) {
 			read(TCOMMA, "',' is not found.");
 

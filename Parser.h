@@ -37,10 +37,10 @@ typedef struct variable_t {
 	char name[MAXSTRSIZE];
 	type_t type;
 
+	struct variable_t *next;
+
 	/* debug information */
 	int DEF_LINE_NUM;
-
-	struct variable_t *next;
 } variable_t;
 
 static int is_variable_name();
@@ -109,6 +109,9 @@ typedef struct {
 
 	int number;
 	char string[MAXSTRSIZE];
+
+	/* type allocation */
+	type_t TYPE;
 } constant_t;
 
 struct expression_t;
@@ -118,6 +121,9 @@ typedef struct {
 
 	int is_array;
 	struct expression_t *index;
+
+	/* type allocation */
+	standard_type_t TYPE;
 
 	/* debug information */
 	int APR_LINE_NUM;
@@ -135,6 +141,9 @@ typedef struct factor_t {
 	struct expression_t *expr;
 	struct factor_t *next;
 	standard_type_t std_type;
+
+	/* type allocation */
+	standard_type_t TYPE;
 } factor_t;
 
 typedef struct term_t {
@@ -142,6 +151,9 @@ typedef struct term_t {
 
 	multiplicative_operator_t mul_opr;
 	struct term_t *next;
+
+	/* type allocation */
+	standard_type_t TYPE;
 } term_t;
 
 typedef struct simple_expression_t {
@@ -150,6 +162,9 @@ typedef struct simple_expression_t {
 
 	additive_operator_t add_opr;
 	struct simple_expression_t *next;
+
+	/* type allocation */
+	standard_type_t TYPE;
 } simple_expression_t;
 
 typedef struct expression_t {
@@ -157,6 +172,9 @@ typedef struct expression_t {
 
 	relational_operator_t rel_opr;
 	struct expression_t *next;
+
+	/* type allocation */
+	standard_type_t TYPE;
 } expression_t;
 
 static int is_constant();
@@ -179,7 +197,7 @@ static expression_t read_expression();
 typedef struct {
 	statement_t base;
 
-	variable_indicator_t target;
+	variable_indicator_t target_var_idr;
 	expression_t expr;
 } assignment_statement_t;
 
@@ -251,7 +269,7 @@ static statement_t *read_return_statement();
 
 // input statement ------------------------------------------
 typedef struct variable_indicators_t {
-	variable_indicator_t var;
+	variable_indicator_t var_idr;
 	struct variable_indicators_t *next;
 } variable_indicators_t;
 
@@ -259,7 +277,7 @@ typedef struct {
 	statement_t base;
 
 	int lined;
-	variable_indicators_t *target;
+	variable_indicators_t *target_var_idrs;
 } input_statement_t;
 
 static int is_input_statement();
@@ -286,7 +304,7 @@ typedef struct {
 	statement_t base;
 
 	int lined;
-	output_formats_t *format;
+	output_formats_t *formats;
 } output_statement_t;
 
 static output_format_t read_output_format();
@@ -316,10 +334,13 @@ typedef struct procedure_t {
 	variable_t *var;
 	statement_t *stmt;
 
+	struct procedure_t *next;
+
+	/* type allocation */
+	type_t *PARAM_TYPE;
+
 	/* debug information */
 	int DEF_LINE_NUM;
-
-	struct procedure_t *next;
 } procedure_t;
 
 static void read_procedure_name(procedure_t *procedure);
@@ -346,3 +367,6 @@ extern program_t parse_program();
 /* ------------------------------------------------------------------------------------ */
 
 #endif
+
+/* TODO: ~s type -> pointer of pointer */
+/* TODO: ~.next -> pointer of pointer */
