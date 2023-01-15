@@ -7,8 +7,6 @@ static void update_token() {
 	token.code = scan();
 	strcpy(token.string, string_attr);
 	token.number = num_attr;
-
-	//if (token.code != -1) printf("%s ", tokencode_to_str(token.code));
 }
 
 static int is(const int TOKEN_CODE) {
@@ -427,6 +425,7 @@ static simple_expression_t read_simple_expression() {
 
 		last->next = malloc(sizeof(simple_expression_t));
 		last = last->next;
+		last->next = NULL;
 
 		last->term = read_term();
 	}
@@ -468,12 +467,12 @@ static variable_indicator_t read_variable() {
 	variable_indicator_t target_var_idr;
 	target_var_idr.is_array = 0;
 	target_var_idr.index = NULL;
-	
-	variable_t *variable = read_variable_name();
-	strcpy(target_var_idr.name, variable->name);
 
 	/* debug information */
 	target_var_idr.APR_LINE_NUM = get_linenum();
+
+	variable_t *variable = read_variable_name();
+	strcpy(target_var_idr.name, variable->name);
 
 	if (is(TLSQPAREN)) {
 		read(TLSQPAREN, "'[' is not found.");
@@ -615,6 +614,9 @@ static call_statement_t *read_call_statement() {
 	call_stmt->base.next = NULL;
 
 	read(TCALL, "'call' is not found.");
+	
+	/* debug information */
+	call_stmt->APR_LINE_NUM = get_linenum();
 
 	strcpy(call_stmt->name, token.string);
 	read(TNAME, "callee procedure name not found.");
@@ -894,12 +896,12 @@ static procedure_t *read_subprogram_declaration() {
 	procedure->var = NULL;
 	procedure->stmt = NULL;
 
+	/* debug information */
+	procedure->DEF_LINE_NUM = get_linenum();
+
 	read(TPROCEDURE, "'procedure' not found.");
 
 	read_procedure_name(procedure);
-
-	/* debug information */
-	procedure->DEF_LINE_NUM = get_linenum();
 
 	if (is_formal_parameters())
 		procedure->param = read_formal_parameters();

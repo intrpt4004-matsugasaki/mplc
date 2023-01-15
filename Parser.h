@@ -254,6 +254,9 @@ typedef struct {
 
 	char name[MAXSTRSIZE];
 	expressions_t *param;
+
+	/* debug information */
+	int APR_LINE_NUM;
 } call_statement_t;
 
 static expressions_t *read_expressions();
@@ -369,3 +372,4 @@ extern program_t parse_program();
 #endif
 
 /* TODO: ~s type -> pointer of pointer */
+/* BUG: LINE_NUM */

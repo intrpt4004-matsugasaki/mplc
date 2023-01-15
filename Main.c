@@ -36,8 +36,8 @@ int main(const int argc, char *argv[]) {
 	name_analyze(p);
 	allocate_type(&p);
 	type_analyze(p);
-	// optimize_code(&p);
 	print_xref_table(p);
+	//optimize_code(&p);
 
 	/*
 	char obj[MAXSTRSIZE];

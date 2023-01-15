@@ -184,7 +184,7 @@ extern void allocate_type(program_t *program) {
 
 	// procedure block
 	for (procedure_t *p = program->proc; p != NULL; p = p->next) {
-		allocate_type_in_procedure(program, p);
+//		allocate_type_in_procedure(program, p);
 
 		REF_SCOPE scope;
 		scope.kind = SCOPE_PROCEDURE;

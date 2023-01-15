@@ -1,5 +1,10 @@
 #include "SemanticAnalyzer.h"
 
+// ---
+static apr_file aprf[100];
+static int aprf_length = 0;
+// ---
+
 static void error(char *message) {
 	/* ERROR */
 	printf("[ERROR] SemanticAnalyzer: %s\n", message);
@@ -49,6 +54,9 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 	variable_t *v;
 	for (v = program.var; v != NULL; v = v->next) {
 		if (!strcmp(v->name, var_idr.name)) {
+			// ---
+			aprf_store(v->name, var_idr.APR_LINE_NUM);
+			// ---
 			return;
 		}
 	}
@@ -60,12 +68,22 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 			if (!strcmp(p->name, scope.proc_name)) {
 				for (variable_t *pp = p->param; pp != NULL; pp = pp->next) {
 					if (!strcmp(pp->name, var_idr.name)) {
+						// ---
+						static char tmp[MAXSTRSIZE];
+						sprintf(tmp, "%s:%s", pp->name, scope.proc_name);
+						aprf_store(tmp, var_idr.APR_LINE_NUM);
+						// ---
 						return;
 					}
 				}
 
 				for (variable_t *pv = p->var; pv != NULL; pv = pv->next) {
 					if (!strcmp(pv->name, var_idr.name)) {
+						// ---
+						static char tmp[MAXSTRSIZE];
+						sprintf(tmp, "%s:%s", pv->name, scope.proc_name);
+						aprf_store(tmp, var_idr.APR_LINE_NUM);
+						// ---
 						return;
 					}
 				}
@@ -73,7 +91,7 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 		}
 	}
 
-	char tmp[MAXSTRSIZE];
+	static char tmp[MAXSTRSIZE];
 	sprintf(tmp, "undeclared variable: %s (at line %d)", var_idr.name, var_idr.APR_LINE_NUM);
 	error(tmp);
 }
@@ -86,7 +104,7 @@ static void procedure_declared(program_t program, char *proc_name) {
 		}
 	}
 
-	char tmp[MAXSTRSIZE];
+	static char tmp[MAXSTRSIZE];
 	sprintf(tmp, "undeclared procedure: %s", proc_name);
 	error(tmp);
 }
@@ -181,6 +199,9 @@ static void name_declared_in_statement(program_t program, REF_SCOPE scope, state
 		call_statement_t *s1 = (call_statement_t *)(s);
 
 		procedure_declared(program, s1->name);
+		// ---
+		aprf_store(s1->name, s1->APR_LINE_NUM);
+		// ---
 		name_declared_in_expressions(program, scope, s1->param);
 
 	} else if (s->kind == INPUT) {
@@ -216,11 +237,51 @@ static void there_is_no_undeclared_name(program_t program) {
 }
 
 extern void name_analyze(program_t program) {
+	//---
+	for (int i = 0; i < 100; i++) {
+		aprf[i].nums_length = 0;
+	}
+	//---
 	there_is_no_overloaded_name(program);
 	there_is_no_undeclared_name(program);
 }
 
 extern void type_analyze(program_t program) {
+}
+
+static void aprf_store(char *name, int apr_line_num) {
+	for (int i = 0; i < aprf_length; i++) {
+		if (!strcmp(aprf[i].name, name)) {
+			aprf[i].apr_line_nums[aprf[i].nums_length++] = apr_line_num;
+			return;
+		}
+	}
+
+	strcpy(aprf[aprf_length].name, name);
+	aprf[aprf_length].apr_line_nums[0] = apr_line_num;
+	aprf[aprf_length].nums_length = 1;
+	aprf_length++;
+}
+
+static int aprf_search(char *name) {
+	for (int i = 0; i < aprf_length; i++) {
+		if (!strcmp(aprf[i].name, name)) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static void print_aprf_apr_line_nums(char *name) {
+	int idx = aprf_search(name);
+	if (idx == -1) {
+		return;
+	}
+
+	for (int i = 0; i < aprf[idx].nums_length; i++) {
+		printf("%d ", aprf[idx].apr_line_nums[i]);
+	}
+	printf("\b");
 }
 
 static char *standard_type_t_to_str(standard_type_t stdtype) {
@@ -247,10 +308,18 @@ static int print_type_and_get_length(type_t type) {
 }
 
 extern void print_xref_table(program_t program) {
+	for (int i = 0; i < aprf_length; i++) {
+		printf("%s: ", aprf[i].name);
+		for (int j = 0; j < aprf[i].nums_length; j++)
+			printf("%d ", aprf[i].apr_line_nums[j]);
+	}
+	printf("\n");
+
 	printf("NAME                  TYPE                  Def.   Ref.\n");
 	printf("-------------------------------------------------------------------------\n");
 
 	int whspl = 22;
+	int whspl2 = 7;
 
 	for (variable_t *v = program.var; v != NULL; v = v->next) {
 		printf("%s", v->name);
@@ -260,7 +329,12 @@ extern void print_xref_table(program_t program) {
 		for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
 
 		printf("%d", v->DEF_LINE_NUM);
+		int sizelen = 1;
+		int size = v->DEF_LINE_NUM;
+		while (size /= 10) sizelen++;
+		for (int i = 0; sizelen < whspl2 && i < whspl2 - sizelen; i++) printf(" ");
 
+		print_aprf_apr_line_nums(v->name);
 		printf("\n");
 	}
 
@@ -282,6 +356,12 @@ extern void print_xref_table(program_t program) {
 		for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
 
 		printf("%d", p->DEF_LINE_NUM);
+		int sizelen = 1;
+		int size = p->DEF_LINE_NUM;
+		while (size /= 10) sizelen++;
+		for (int i = 0; sizelen < whspl2 && i < whspl2 - sizelen; i++) printf(" ");
+
+		print_aprf_apr_line_nums(p->name);
 		printf("\n");
 
 		for (variable_t *pp = p->param; pp != NULL; pp = pp->next) {
@@ -292,7 +372,12 @@ extern void print_xref_table(program_t program) {
 			for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
 
 			printf("%d", pp->DEF_LINE_NUM);
+			sizelen = 1;
+			size = pp->DEF_LINE_NUM;
+			while (size /= 10) sizelen++;
+			for (int i = 0; sizelen < whspl2 && i < whspl2 - sizelen; i++) printf(" ");
 
+			print_aprf_apr_line_nums(pp->name);
 			printf("\n");
 		}
 
@@ -304,7 +389,12 @@ extern void print_xref_table(program_t program) {
 			for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
 
 			printf("%d", pv->DEF_LINE_NUM);
+			sizelen = 1;
+			size = pv->DEF_LINE_NUM;
+			while (size /= 10) sizelen++;
+			for (int i = 0; sizelen < whspl2 && i < whspl2 - sizelen; i++) printf(" ");
 
+			print_aprf_apr_line_nums(pv->name);
 			printf("\n");
 		}
 	}

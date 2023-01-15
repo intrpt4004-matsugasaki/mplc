@@ -2,11 +2,11 @@ program test2;
 var a: integer;
 	c: integer;
 
-procedure c(a: integer);
-var c: integer;
+procedure cx(a: integer);
 begin
+	c := 3;
 end;
 
 begin
-	call c;
+	call cx(a);
 end.
