@@ -51,17 +51,17 @@ static void there_is_no_overloaded_name(program_t program) {
 }
 
 static void variable_declared(program_t program, REF_SCOPE scope, variable_indicator_t var_idr) {
-	variable_t *v;
-	for (v = program.var; v != NULL; v = v->next) {
-		if (!strcmp(v->name, var_idr.name)) {
-			// ---
-			aprf_store(v->name, var_idr.APR_LINE_NUM);
-			// ---
-			return;
+	if (scope.kind == SCOPE_PROGRAM) {
+		for (variable_t *v = program.var; v != NULL; v = v->next) {
+			if (!strcmp(v->name, var_idr.name)) {
+				// ---
+				printf("prog-var: %s\n", v->name);
+				aprf_store(v->name, var_idr.APR_LINE_NUM);
+				// ---
+				return;
+			}
 		}
-	}
-
-	if (scope.kind == SCOPE_PROCEDURE) {
+	} else if (scope.kind == SCOPE_PROCEDURE) {
 		procedure_declared(program, scope.proc_name); // hitsuyou?
 
 		for (procedure_t *p = program.proc; p != NULL; p = p->next) {
@@ -72,6 +72,7 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 						static char tmp[MAXSTRSIZE];
 						sprintf(tmp, "%s:%s", pp->name, scope.proc_name);
 						aprf_store(tmp, var_idr.APR_LINE_NUM);
+						printf("proc-param: %s\n", tmp);
 						// ---
 						return;
 					}
@@ -83,6 +84,7 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 						static char tmp[MAXSTRSIZE];
 						sprintf(tmp, "%s:%s", pv->name, scope.proc_name);
 						aprf_store(tmp, var_idr.APR_LINE_NUM);
+						printf("proc-var: %s\n", tmp);
 						// ---
 						return;
 					}
@@ -167,12 +169,13 @@ static void name_declared_output_formats(program_t program, REF_SCOPE scope, out
 }
 
 static void name_declared_in_statement(program_t program, REF_SCOPE scope, statement_t *s) {
-	if (s->kind == EXIT || s->kind == RETURN || s->kind == EMPTY)
+	if (s == NULL)
 		return;
 
 	if (s->kind == ASSIGN) {
 		assignment_statement_t *s1 = (assignment_statement_t *)(s);
 
+		printf("ASSIGN:   \n   %s\n", s1->target_var_idr.name);
 		variable_declared(program, scope, s1->target_var_idr);
 
 		if (s1->target_var_idr.is_array)
@@ -200,6 +203,7 @@ static void name_declared_in_statement(program_t program, REF_SCOPE scope, state
 
 		procedure_declared(program, s1->name);
 		// ---
+		printf("CALL: \n   %s\n", s1->name);
 		aprf_store(s1->name, s1->APR_LINE_NUM);
 		// ---
 		name_declared_in_expressions(program, scope, s1->param);
@@ -207,22 +211,28 @@ static void name_declared_in_statement(program_t program, REF_SCOPE scope, state
 	} else if (s->kind == INPUT) {
 		input_statement_t *s1 = (input_statement_t *)(s);
 
+		printf("INPUT: \n");
+		for (variable_indicators_t *i = s1->target_var_idrs; i != NULL; i = i->next) {
+			printf("   %s\n", i->var_idr.name);
+		}
+
 		name_declared_in_variable_indicators(program, scope, s1->target_var_idrs);
 
 	} else if (s->kind == OUTPUT) {
 		output_statement_t *s1 = (output_statement_t *)(s);
 
+		printf("OUTPUT: \n");
 		name_declared_output_formats(program, scope, s1->formats);
 	}
+
+	name_declared_in_statement(program, scope, s->next);
 }
 
 static void there_is_no_undeclared_name(program_t program) {
 	// program block
-	for (statement_t *s = program.stmt; s != NULL; s = s->next) {
-		REF_SCOPE scope;
-		scope.kind = SCOPE_PROGRAM;
-		name_declared_in_statement(program, scope, s);
-	}
+	REF_SCOPE scope;
+	scope.kind = SCOPE_PROGRAM;
+	name_declared_in_statement(program, scope, program.stmt);
 
 	// procedure block
 	for (procedure_t *p = program.proc; p != NULL; p = p->next) {
@@ -230,9 +240,7 @@ static void there_is_no_undeclared_name(program_t program) {
 		scope.kind = SCOPE_PROCEDURE;
 		strcpy(scope.proc_name, p->name);
 
-		for (statement_t *s = p->stmt; s != NULL; s = s->next) {
-			name_declared_in_statement(program, scope, s);
-		}
+		name_declared_in_statement(program, scope, p->stmt);
 	}
 }
 
@@ -250,17 +258,16 @@ extern void type_analyze(program_t program) {
 }
 
 static void aprf_store(char *name, int apr_line_num) {
-	for (int i = 0; i < aprf_length; i++) {
-		if (!strcmp(aprf[i].name, name)) {
-			aprf[i].apr_line_nums[aprf[i].nums_length++] = apr_line_num;
-			return;
-		}
-	}
+	int i = aprf_search(name);
 
-	strcpy(aprf[aprf_length].name, name);
-	aprf[aprf_length].apr_line_nums[0] = apr_line_num;
-	aprf[aprf_length].nums_length = 1;
-	aprf_length++;
+	if (i != -1) {
+		aprf[i].apr_line_nums[aprf[i].nums_length++] = apr_line_num;
+	} else {
+		strcpy(aprf[aprf_length].name, name);
+		aprf[aprf_length].apr_line_nums[0] = apr_line_num;
+		aprf[aprf_length].nums_length = 1;
+		aprf_length++;
+	}
 }
 
 static int aprf_search(char *name) {
@@ -308,31 +315,25 @@ static int print_type_and_get_length(type_t type) {
 }
 
 extern void print_xref_table(program_t program) {
-	for (int i = 0; i < aprf_length; i++) {
-		printf("%s: ", aprf[i].name);
-		for (int j = 0; j < aprf[i].nums_length; j++)
-			printf("%d ", aprf[i].apr_line_nums[j]);
-	}
-	printf("\n");
+	printf("NAME                  TYPE                                              Def.      Ref.\n");
+	printf("--------------------------------------------------------------------------------------------------\n");
 
-	printf("NAME                  TYPE                  Def.   Ref.\n");
-	printf("-------------------------------------------------------------------------\n");
-
-	int whspl = 22;
-	int whspl2 = 7;
+	int whsplnt = 22;
+	int whspltd = 50;
+	int whspldr = 10;
 
 	for (variable_t *v = program.var; v != NULL; v = v->next) {
 		printf("%s", v->name);
-		for (int i = 0; strlen(v->name) < whspl && i < whspl - strlen(v->name); i++) printf(" ");
+		for (int i = 0; strlen(v->name) < whsplnt && i < whsplnt - strlen(v->name); i++) printf(" ");
 
 		int len = print_type_and_get_length(v->type);
-		for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
+		for (int i = 0; len < whspltd && i < whspltd - len; i++) printf(" ");
 
 		printf("%d", v->DEF_LINE_NUM);
 		int sizelen = 1;
 		int size = v->DEF_LINE_NUM;
 		while (size /= 10) sizelen++;
-		for (int i = 0; sizelen < whspl2 && i < whspl2 - sizelen; i++) printf(" ");
+		for (int i = 0; sizelen < whspldr && i < whspldr - sizelen; i++) printf(" ");
 
 		print_aprf_apr_line_nums(v->name);
 		printf("\n");
@@ -340,7 +341,7 @@ extern void print_xref_table(program_t program) {
 
 	for (procedure_t *p = program.proc; p != NULL; p = p->next) {
 		printf("%s", p->name);
-		for (int i = 0; strlen(p->name) < whspl && i < whspl - strlen(p->name); i++) printf(" ");
+		for (int i = 0; strlen(p->name) < whsplnt && i < whsplnt - strlen(p->name); i++) printf(" ");
 	
 		printf("procedure(");
 		int len = 11;
@@ -353,48 +354,52 @@ extern void print_xref_table(program_t program) {
 			printf("\b\b");
 		}
 		printf(")");
-		for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
+		for (int i = 0; len < whspltd && i < whspltd - len; i++) printf(" ");
 
 		printf("%d", p->DEF_LINE_NUM);
 		int sizelen = 1;
 		int size = p->DEF_LINE_NUM;
 		while (size /= 10) sizelen++;
-		for (int i = 0; sizelen < whspl2 && i < whspl2 - sizelen; i++) printf(" ");
+		for (int i = 0; sizelen < whspldr && i < whspldr - sizelen; i++) printf(" ");
 
 		print_aprf_apr_line_nums(p->name);
 		printf("\n");
 
 		for (variable_t *pp = p->param; pp != NULL; pp = pp->next) {
 			printf("%s:%s", pp->name, p->name);
-			for (int i = 0; strlen(pp->name) + strlen(p->name) + 1 < whspl && i < whspl - strlen(pp->name) - strlen(p->name) - 1; i++) printf(" ");
+			for (int i = 0; strlen(pp->name) + strlen(p->name) + 1 < whsplnt && i < whsplnt - strlen(pp->name) - strlen(p->name) - 1; i++) printf(" ");
 
 			int len = print_type_and_get_length(pp->type);
-			for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
+			for (int i = 0; len < whspltd && i < whspltd - len; i++) printf(" ");
 
 			printf("%d", pp->DEF_LINE_NUM);
 			sizelen = 1;
 			size = pp->DEF_LINE_NUM;
 			while (size /= 10) sizelen++;
-			for (int i = 0; sizelen < whspl2 && i < whspl2 - sizelen; i++) printf(" ");
+			for (int i = 0; sizelen < whspldr && i < whspldr - sizelen; i++) printf(" ");
 
-			print_aprf_apr_line_nums(pp->name);
+			static char tmp[MAXSTRSIZE];
+			sprintf(tmp, "%s:%s", pp->name, p->name);
+			print_aprf_apr_line_nums(tmp);
 			printf("\n");
 		}
 
 		for (variable_t *pv = p->var; pv != NULL; pv = pv->next) {
 			printf("%s:%s", pv->name, p->name);
-			for (int i = 0; strlen(pv->name) + strlen(p->name) + 1 < whspl && i < whspl - strlen(pv->name) - strlen(p->name) - 1; i++) printf(" ");
+			for (int i = 0; strlen(pv->name) + strlen(p->name) + 1 < whsplnt && i < whsplnt - strlen(pv->name) - strlen(p->name) - 1; i++) printf(" ");
 
 			int len = print_type_and_get_length(pv->type);
-			for (int i = 0; len < whspl && i < whspl - len; i++) printf(" ");
+			for (int i = 0; len < whspltd && i < whspltd - len; i++) printf(" ");
 
 			printf("%d", pv->DEF_LINE_NUM);
 			sizelen = 1;
 			size = pv->DEF_LINE_NUM;
 			while (size /= 10) sizelen++;
-			for (int i = 0; sizelen < whspl2 && i < whspl2 - sizelen; i++) printf(" ");
+			for (int i = 0; sizelen < whspldr && i < whspldr - sizelen; i++) printf(" ");
 
-			print_aprf_apr_line_nums(pv->name);
+			static char tmp[MAXSTRSIZE];
+			sprintf(tmp, "%s:%s", pv->name, p->name);
+			print_aprf_apr_line_nums(tmp);
 			printf("\n");
 		}
 	}

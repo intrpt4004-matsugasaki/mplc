@@ -155,10 +155,11 @@ static int is_comment() {
 }
 
 static void skip_EOL() {
-	if (c[1] == '\r' || c[1] == '\n') {
-		update_char();
+	if ((c[0] == '\r' || c[0] == '\n') && (c[1] != '\r' && c[1] != 'n')) {
 		update_char();
 	} else {
+		update_char();
+		linenum++;
 		update_char();
 	}
 	linenum++;

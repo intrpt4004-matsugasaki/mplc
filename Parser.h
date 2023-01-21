@@ -8,6 +8,9 @@ typedef struct {
 	int code;
 	char string[MAXSTRSIZE];
 	int number;
+
+	/* debug information */
+	int line_num;
 } token_t;
 
 static void update_token();

@@ -7,6 +7,9 @@ static void update_token() {
 	token.code = scan();
 	strcpy(token.string, string_attr);
 	token.number = num_attr;
+
+	/* debug information */
+	token.line_num = get_linenum();
 }
 
 static int is(const int TOKEN_CODE) {
@@ -21,7 +24,7 @@ static void read(const int TOKEN_CODE, char *error_message) {
 }
 
 static void error(char *message) {
-	printf("[ERROR] Parser: %s (at line %d)\n", message, get_linenum());
+	printf("[ERROR] Parser: %s (at line %d)\n", message, token.line_num);
 	end_scan();
 
 	exit(-1);
@@ -38,7 +41,7 @@ static variable_t *read_variable_name() {
 	variable->next = NULL;
 
 	/* debug information */
-	variable->DEF_LINE_NUM = get_linenum();
+	variable->DEF_LINE_NUM = token.line_num;
 
 	strcpy(variable->name, token.string);
 	read(TNAME, "variable name is not found.");
@@ -329,16 +332,14 @@ static factor_t read_factor() {
 	if (is_variable()) {
 		factor.kind = VAR_IDR;
 		factor.var_idr = read_variable();
-		return factor;
 	}
 
-	if (is_constant()) {
+	else if (is_constant()) {
 		factor.kind = CONST;
 		factor.cons = read_constant();
-		return factor;
 	}
 
-	if (is(TLPAREN)) {
+	else if (is(TLPAREN)) {
 		read(TLPAREN, "'(' is not found.");		
 
 		factor.kind = EXPR;
@@ -346,20 +347,17 @@ static factor_t read_factor() {
 		*factor.expr = read_expression();
 
 		read(TRPAREN, "')' is not found.");
-
-		return factor;
 	}
 
-	if (is(TNOT)) {
+	else if (is(TNOT)) {
 		read(TNOT, "'not' is not found.");		
 
 		factor.kind = INVERT_FACTOR;
 		factor.next = malloc(sizeof(factor_t));
 		*factor.next = read_factor();
-		return factor;
 	}
 
-	if (is_standard_type()) {
+	else if (is_standard_type()) {
 		factor.kind = STD_TYPE;
 
 		factor.std_type = read_standard_type();
@@ -370,11 +368,13 @@ static factor_t read_factor() {
 		*factor.expr = read_expression();
 
 		read(TRPAREN, "')' is not found.");
-
-		return factor;
+	}
+	
+	else {
+		error("unmachted on read_factor.");
 	}
 
-	error("unmachted on read_factor.");
+	return factor;
 }
 
 static int is_term() {
@@ -469,7 +469,7 @@ static variable_indicator_t read_variable() {
 	target_var_idr.index = NULL;
 
 	/* debug information */
-	target_var_idr.APR_LINE_NUM = get_linenum();
+	target_var_idr.APR_LINE_NUM = token.line_num;
 
 	variable_t *variable = read_variable_name();
 	strcpy(target_var_idr.name, variable->name);
@@ -616,7 +616,7 @@ static call_statement_t *read_call_statement() {
 	read(TCALL, "'call' is not found.");
 	
 	/* debug information */
-	call_stmt->APR_LINE_NUM = get_linenum();
+	call_stmt->APR_LINE_NUM = token.line_num;
 
 	strcpy(call_stmt->name, token.string);
 	read(TNAME, "callee procedure name not found.");
@@ -897,7 +897,7 @@ static procedure_t *read_subprogram_declaration() {
 	procedure->stmt = NULL;
 
 	/* debug information */
-	procedure->DEF_LINE_NUM = get_linenum();
+	procedure->DEF_LINE_NUM = token.line_num;
 
 	read(TPROCEDURE, "'procedure' not found.");
 

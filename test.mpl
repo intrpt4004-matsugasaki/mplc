@@ -1,6 +1,6 @@
 program test;
 
-var a, bb: char;
+var a, bb, b, c, asx: char;
     cc: integer;
 
 procedure ppp1;
@@ -25,13 +25,17 @@ procedure ppp2x(yy: char; xx: array[122] of boolean);
 var wef: integer;
 begin
 	writeln('a');
+	{call ppp2(yy, wef);}
 	return;
 end;
+
+var c3, c4: integer;
 
 begin
 	return;
 	break;
 	call ppp1;
+	call ppp2x(a, b);
 
 	cc := 3;
 	qqq123[12] := cc * 2 + 3;
@@ -40,15 +44,17 @@ begin
 
 	if (true) then begin
 		break;
+		c3 := 4;
 		return;
 	end else begin
 		break;
+		c4 := 4;
 		return;
 	end
 	;
 
 	while (true) do begin
-		cc := 3;
+		c3 := 3;
 		return;
 	end
 	;
@@ -60,6 +66,9 @@ begin
 	write('aaa');
 	writeln(asx);
 	writeln('ccc ccc');
+
+	read(a, b, c);
+	readln(asx);
 
 	return;
 end.
