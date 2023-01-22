@@ -2,9 +2,10 @@
  * mplc: mpl compiler                       *
  *                                          *
  * $ gcc -std=c99 -pedantic                 *
- *        Main.c Scanner.c Parser.c         *
- *             SemanticAnalyzer.c           *
- *                  TypeAllocator.c -o cr   *
+ *     Main.c Scanner.c Parser.c            *
+ *       SemanticAnalyzer.c                 *
+ *         TypeAllocator.c CodeGenerator.c  *
+ *           -o mpplc                       *
  *                                          *
  *                     gcc version: 12.2.0  *
  ********************************************/
@@ -17,7 +18,7 @@
 #include "SemanticAnalyzer.h"
 #include "TypeAllocator.h"
 //#include "CodeOptimizer.h"
-//#include "CodeGenerator.h"
+#include "CodeGenerator.h"
 
 int main(const int argc, char *argv[]) {
 	if (argc < 2) {
@@ -37,11 +38,10 @@ int main(const int argc, char *argv[]) {
 	allocate_type(&p);
 	type_analyze(p);
 	print_xref_table(p);
+
 	//optimize_code(&p);
 
-	/*
 	char obj[MAXSTRSIZE];
 	sprintf(obj, "%s.csl", get_stem(argv[1]));
 	generate_code(obj, p);
-	*/
 }

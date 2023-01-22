@@ -353,19 +353,19 @@ static factor_t read_factor() {
 		read(TNOT, "'not' is not found.");		
 
 		factor.kind = INVERT_FACTOR;
-		factor.next = malloc(sizeof(factor_t));
-		*factor.next = read_factor();
+		factor.inv_factor = malloc(sizeof(factor_t));
+		*factor.inv_factor = read_factor();
 	}
 
 	else if (is_standard_type()) {
-		factor.kind = STD_TYPE;
+		factor.kind = CAST_EXPR;
 
-		factor.std_type = read_standard_type();
+		factor.cast_std_type = read_standard_type();
 
 		read(TLPAREN, "'(' is not found.");		
 
-		factor.expr = malloc(sizeof(expression_t));
-		*factor.expr = read_expression();
+		factor.cast_expr = malloc(sizeof(expression_t));
+		*factor.cast_expr = read_expression();
 
 		read(TRPAREN, "')' is not found.");
 	}
@@ -408,6 +408,7 @@ static int is_simple_expression() {
 static simple_expression_t read_simple_expression() {
 	simple_expression_t simp_expr;
 	simp_expr.next = NULL;
+	simp_expr.prefix = NONE;
 
 	if (is(TPLUS)) {
 		read(TPLUS, "'+' is not found.");
@@ -440,6 +441,7 @@ static int is_expression() {
 static expression_t read_expression() {
 	expression_t expr;
 	expr.next = NULL;
+	expr.LINE_NUM = token.line_num;
 
 	expr.simp_expr = read_simple_expression();
 
@@ -699,8 +701,15 @@ static input_statement_t *read_input_statement() {
 static output_format_t read_output_format() {
 	output_format_t format;
 	format.has_expr_num = 0;
+	format.LINE_NUM = token.line_num;
 
-	if (is_expression()) {
+	if (is(TSTRING)) {
+		format.kind = STR_MODE;
+
+		strcpy(format.string, token.string);
+		read(TSTRING, "string is not found.");
+	}
+	else if (is_expression()) {
 		format.kind = EXPR_MODE;
 		format.expr = read_expression();
 
@@ -711,14 +720,8 @@ static output_format_t read_output_format() {
 			format.expr_num = token.number;
 			read(TNUMBER, "number is not found.");
 		}
-
-	} else if (is(TSTRING)) {
-		format.kind = STR_MODE;
-
-		strcpy(format.string, token.string);
-		read(TSTRING, "string is not found.");
-
-	} else {
+	}
+	else {
 		error("unmatched on read_output_format.");
 	}
 

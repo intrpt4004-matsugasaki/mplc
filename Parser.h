@@ -136,14 +136,15 @@ typedef struct factor_t {
 	enum {
 		VAR_IDR, CONST,
 		EXPR, INVERT_FACTOR,
-		STD_TYPE
+		CAST_EXPR
 	} kind;
 
 	variable_indicator_t var_idr;
 	constant_t cons;
 	struct expression_t *expr;
-	struct factor_t *next;
-	standard_type_t std_type;
+	struct factor_t *inv_factor;
+	standard_type_t cast_std_type;
+	struct expression_t *cast_expr;
 
 	/* type allocation */
 	type_t TYPE;
@@ -160,7 +161,7 @@ typedef struct term_t {
 } term_t;
 
 typedef struct simple_expression_t {
-	enum { POSITIVE, NEGATIVE } prefix;
+	enum { NONE, POSITIVE, NEGATIVE } prefix;
 	term_t term;
 
 	additive_operator_t add_opr;
@@ -178,6 +179,9 @@ typedef struct expression_t {
 
 	/* type allocation */
 	type_t TYPE;
+
+	/* debug information */
+	int LINE_NUM;
 } expression_t;
 
 static int is_constant();
@@ -302,6 +306,9 @@ typedef struct {
 
 	/* type allocation */
 	type_t TYPE;
+
+	/* debug information */
+	int LINE_NUM;
 } output_format_t;
 
 typedef struct output_formats_t {

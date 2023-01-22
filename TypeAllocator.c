@@ -52,6 +52,7 @@ static void allocate_type_in_variable_indicator(program_t *program, REF_SCOPE sc
 static void allocate_type_in_factor(program_t *program, REF_SCOPE scope, factor_t *factor) {
 	if (factor->kind == VAR_IDR) {
 		allocate_type_in_variable_indicator(program, scope, &factor->var_idr);
+		factor->TYPE = factor->var_idr.TYPE;
 
 	} else if (factor->kind == CONST) {
 		allocate_type_in_constant(&factor->cons);
@@ -62,12 +63,12 @@ static void allocate_type_in_factor(program_t *program, REF_SCOPE scope, factor_
 		factor->TYPE = factor->expr->TYPE;
 
 	} else if (factor->kind == INVERT_FACTOR) {
-		allocate_type_in_factor(program, scope, factor->next);
-		factor->TYPE = factor->next->TYPE;
+		allocate_type_in_factor(program, scope, factor->inv_factor);
+		factor->TYPE = factor->inv_factor->TYPE;
 
-	} else if (factor->kind == STD_TYPE) {
+	} else if (factor->kind == CAST_EXPR) {
 		factor->TYPE.kind = STANDARD;
-		factor->TYPE.standard = factor->std_type;
+		factor->TYPE.standard = factor->cast_std_type;
 	}
 }
 
@@ -90,8 +91,13 @@ static void allocate_type_in_simple_expression(program_t *program, REF_SCOPE sco
 static void allocate_type_in_expression(program_t *program, REF_SCOPE scope, expression_t *expr) {
 	allocate_type_in_simple_expression(program, scope, &expr->simp_expr);
 
-	if (expr->next != NULL)
+	if (expr->next != NULL) {
+		expr->TYPE.kind = STANDARD;
+		expr->TYPE.standard = BOOLEAN;
 		allocate_type_in_expression(program, scope, expr->next);
+	} else {
+		expr->TYPE = expr->simp_expr.TYPE;	
+	}
 }
 
 static void allocate_type_in_expressions(program_t *program, REF_SCOPE scope, expressions_t *exprs) {
@@ -173,7 +179,7 @@ static void allocate_type_in_procedure(program_t *program, procedure_t *proc) {
 	for (variable_t *var = proc->param; var != NULL; var = var->next)
 		proc->ARITY++;
 
-	proc->TYPE = malloc(proc->ARITY * sizeof(standard_type_t));
+	proc->TYPE = malloc(proc->ARITY * sizeof(type_t));
 
 	int i = 0;
 	for (variable_t *var = proc->param; var != NULL; var = var->next) {
