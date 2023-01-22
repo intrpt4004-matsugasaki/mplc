@@ -43,7 +43,7 @@ typedef struct variable_t {
 	struct variable_t *next;
 
 	/* debug information */
-	int DEF_LINE_NUM;
+	int LINE_NUM;
 } variable_t;
 
 static int is_variable_name();
@@ -75,6 +75,9 @@ typedef struct statement_t {
 	} kind;
 
 	struct statement_t *next;
+
+	/* debug information */
+	int LINE_NUM;
 } statement_t;
 
 // operator -------------------------------------------------
@@ -115,6 +118,9 @@ typedef struct {
 
 	/* type allocation */
 	type_t TYPE;
+
+	/* debug information */
+	int LINE_NUM;
 } constant_t;
 
 struct expression_t;
@@ -129,7 +135,7 @@ typedef struct {
 	type_t TYPE;
 
 	/* debug information */
-	int APR_LINE_NUM;
+	int LINE_NUM;
 } variable_indicator_t;
 
 typedef struct factor_t {
@@ -148,6 +154,9 @@ typedef struct factor_t {
 
 	/* type allocation */
 	type_t TYPE;
+
+	/* debug information */
+	int LINE_NUM;
 } factor_t;
 
 typedef struct term_t {
@@ -158,6 +167,9 @@ typedef struct term_t {
 
 	/* type allocation */
 	type_t TYPE;
+
+	/* debug information */
+	int LINE_NUM;
 } term_t;
 
 typedef struct simple_expression_t {
@@ -169,6 +181,9 @@ typedef struct simple_expression_t {
 
 	/* type allocation */
 	type_t TYPE;
+
+	/* debug information */
+	int LINE_NUM;
 } simple_expression_t;
 
 typedef struct expression_t {
@@ -206,6 +221,9 @@ typedef struct {
 
 	variable_indicator_t target_var_idr;
 	expression_t expr;
+
+	/* debug information */
+	int LINE_NUM;
 } assignment_statement_t;
 
 static int is_variable();
@@ -227,6 +245,9 @@ typedef struct {
 
 	int has_else_stmt;
 	statement_t *else_stmt;
+
+	/* debug information */
+	int LINE_NUM;
 } condition_statement_t;
 
 static int is_condition_statement();
@@ -239,6 +260,9 @@ typedef struct {
 
 	expression_t cond;
 	statement_t *loop_stmt;
+
+	/* debug information */
+	int LINE_NUM;
 } iteration_statement_t;
 
 static int is_iteration_statement();
@@ -263,7 +287,7 @@ typedef struct {
 	expressions_t *param;
 
 	/* debug information */
-	int APR_LINE_NUM;
+	int LINE_NUM;
 } call_statement_t;
 
 static expressions_t *read_expressions();
@@ -288,6 +312,9 @@ typedef struct {
 
 	int lined;
 	variable_indicators_t *target_var_idrs;
+
+	/* debug information */
+	int LINE_NUM;
 } input_statement_t;
 
 static int is_input_statement();
@@ -321,6 +348,9 @@ typedef struct {
 
 	int lined;
 	output_formats_t *formats;
+
+	/* debug information */
+	int LINE_NUM;
 } output_statement_t;
 
 static output_format_t read_output_format();
@@ -357,7 +387,7 @@ typedef struct procedure_t {
 	type_t *TYPE;
 
 	/* debug information */
-	int DEF_LINE_NUM;
+	int LINE_NUM;
 } procedure_t;
 
 static void read_procedure_name(procedure_t *procedure);

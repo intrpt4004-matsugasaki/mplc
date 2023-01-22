@@ -17,7 +17,7 @@ typedef struct {
 } REF_SCOPE;
 
 static void variable_declared(program_t program, REF_SCOPE scope, variable_indicator_t var_idr);
-static void procedure_declared(program_t program, char *proc_name);
+static void procedure_declared(program_t program, char *proc_name, int LINE_NUM);
 static void name_declared_in_variable_indicator(program_t program, REF_SCOPE scope, variable_indicator_t var_idr);
 static void name_declared_in_factor(program_t program, REF_SCOPE scope, factor_t factor);
 static void name_declared_in_term(program_t program, REF_SCOPE scope, term_t term);

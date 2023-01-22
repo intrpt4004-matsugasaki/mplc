@@ -41,7 +41,7 @@ static variable_t *read_variable_name() {
 	variable->next = NULL;
 
 	/* debug information */
-	variable->DEF_LINE_NUM = token.line_num;
+	variable->LINE_NUM = token.line_num;
 
 	strcpy(variable->name, token.string);
 	read(TNAME, "variable name is not found.");
@@ -292,6 +292,10 @@ static int is_constant() {
 static constant_t read_constant() {
 	constant_t constant;
 
+	/* debug information */
+	constant.LINE_NUM = token.line_num;
+
+
 	if (is(TNUMBER)) {
 		read(TNUMBER, "number is not found.");
 		constant.kind = NUMBER;
@@ -328,6 +332,9 @@ static int is_factor() {
 
 static factor_t read_factor() {
 	factor_t factor;
+
+	/* debug information */
+	factor.LINE_NUM = token.line_num;
 
 	if (is_variable()) {
 		factor.kind = VAR_IDR;
@@ -385,6 +392,9 @@ static term_t read_term() {
 	term_t term;
 	term.next = NULL;
 
+	/* debug information */
+	term.LINE_NUM = token.line_num;
+
 	term.factor = read_factor();
 
 	term_t *last = &term;
@@ -409,6 +419,9 @@ static simple_expression_t read_simple_expression() {
 	simple_expression_t simp_expr;
 	simp_expr.next = NULL;
 	simp_expr.prefix = NONE;
+
+	/* debug information */
+	simp_expr.LINE_NUM = token.line_num;
 
 	if (is(TPLUS)) {
 		read(TPLUS, "'+' is not found.");
@@ -441,6 +454,8 @@ static int is_expression() {
 static expression_t read_expression() {
 	expression_t expr;
 	expr.next = NULL;
+
+	/* debug information */
 	expr.LINE_NUM = token.line_num;
 
 	expr.simp_expr = read_simple_expression();
@@ -471,7 +486,7 @@ static variable_indicator_t read_variable() {
 	target_var_idr.index = NULL;
 
 	/* debug information */
-	target_var_idr.APR_LINE_NUM = token.line_num;
+	target_var_idr.LINE_NUM = token.line_num;
 
 	variable_t *variable = read_variable_name();
 	strcpy(target_var_idr.name, variable->name);
@@ -506,6 +521,9 @@ static assignment_statement_t *read_assignment_statement() {
 	assn_stmt->base.kind = ASSIGN;
 	assn_stmt->base.next = NULL;
 
+	/* debug information */
+	assn_stmt->LINE_NUM = token.line_num;
+
 	assn_stmt->target_var_idr = read_left_part();
 
 	read(TASSIGN, "':=' is not found.");
@@ -526,6 +544,9 @@ static condition_statement_t *read_condition_statement() {
 	cond_stmt->base.kind = CONDITION;
 	cond_stmt->base.next = NULL;
 	cond_stmt->has_else_stmt = 0;
+
+	/* debug information */
+	cond_stmt->LINE_NUM = token.line_num;
 
 	read(TIF, "'if' is not found.");
 
@@ -556,6 +577,9 @@ static iteration_statement_t *read_iteration_statement() {
 	iter_stmt->base.kind = ITERATION;
 	iter_stmt->base.next = NULL;
 
+	/* debug information */
+	iter_stmt->LINE_NUM = token.line_num;
+
 	read(TWHILE, "'while' is not found.");
 
 	iter_stmt->cond = read_expression();
@@ -577,6 +601,9 @@ static statement_t *read_exit_statement() {
 	statement_t *stmt = malloc(sizeof(statement_t));
 	stmt->kind = EXIT;
 	stmt->next = NULL;
+
+	/* debug information */
+	stmt->LINE_NUM = token.line_num;
 
 	read(TBREAK, "'break' is not found.");
 
@@ -615,10 +642,13 @@ static call_statement_t *read_call_statement() {
 	call_stmt->base.kind = CALL;
 	call_stmt->base.next = NULL;
 
+	/* debug information */
+	call_stmt->LINE_NUM = token.line_num;
+
 	read(TCALL, "'call' is not found.");
 	
 	/* debug information */
-	call_stmt->APR_LINE_NUM = token.line_num;
+	call_stmt->LINE_NUM = token.line_num;
 
 	strcpy(call_stmt->name, token.string);
 	read(TNAME, "callee procedure name not found.");
@@ -645,6 +675,9 @@ static statement_t *read_return_statement() {
 	stmt->kind = RETURN;
 	stmt->next = NULL;
 
+	/* debug information */
+	stmt->LINE_NUM = token.line_num;
+
 	read(TRETURN, "'return' is not found.");
 
 	return stmt;
@@ -660,6 +693,9 @@ static input_statement_t *read_input_statement() {
 	input_statement_t *input_stmt = malloc(sizeof(input_statement_t));
 	input_stmt->base.kind = INPUT;
 	input_stmt->base.next = NULL;
+
+	/* debug information */
+	input_stmt->LINE_NUM = token.line_num;
 
 	if (is(TREAD)) {
 		read(TREAD, "'read' is not found.");
@@ -701,6 +737,8 @@ static input_statement_t *read_input_statement() {
 static output_format_t read_output_format() {
 	output_format_t format;
 	format.has_expr_num = 0;
+
+	/* debug information */
 	format.LINE_NUM = token.line_num;
 
 	if (is(TSTRING)) {
@@ -737,6 +775,9 @@ static output_statement_t *read_output_statement() {
 	output_stmt->base.kind = OUTPUT;
 	output_stmt->base.next = NULL;
 	output_stmt->formats = NULL;
+
+	/* debug information */
+	output_stmt->LINE_NUM = token.line_num;
 
 	if (is(TWRITE)) {
 		read(TWRITE, "'write' is not found.");
@@ -779,6 +820,9 @@ static statement_t *read_empty_statement() {
 	statement_t *stmt = malloc(sizeof(statement_t));
 	stmt->kind = EMPTY;
 	stmt->next = NULL;
+
+	/* debug information */
+	stmt->LINE_NUM = token.line_num;
 
 	return stmt;
 }
@@ -901,7 +945,7 @@ static procedure_t *read_subprogram_declaration() {
 	procedure->stmt = NULL;
 
 	/* debug information */
-	procedure->DEF_LINE_NUM = token.line_num;
+	procedure->LINE_NUM = token.line_num;
 
 	read(TPROCEDURE, "'procedure' not found.");
 

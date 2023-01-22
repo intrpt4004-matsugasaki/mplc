@@ -22,7 +22,7 @@ static void there_is_no_overloaded_name(program_t program) {
 		for (variable_t *w = v->next; w != NULL; w = w->next) {
 			if (!strcmp(v->name, w->name)) {
 				char tmp[MAXSTRSIZE];
-				sprintf(tmp, "overloaded name: %s (at line %d)", v->name, v->DEF_LINE_NUM);
+				sprintf(tmp, "overloaded name: %s (at line %d)", v->name, v->LINE_NUM);
 				error(tmp);
 			}
 		}
@@ -34,7 +34,7 @@ static void there_is_no_overloaded_name(program_t program) {
 			for (variable_t *w = program.var; w != NULL; w = w->next) {
 				if (!strcmp(v->name, w->name)) {
 					char tmp[MAXSTRSIZE];
-					sprintf(tmp, "overloaded name: %s (at line %d)", v->name, v->DEF_LINE_NUM);
+					sprintf(tmp, "overloaded name: %s (at line %d)", v->name, v->LINE_NUM);
 					error(tmp);
 				}
 			}
@@ -44,7 +44,7 @@ static void there_is_no_overloaded_name(program_t program) {
 			for (variable_t *w = p->var; w != NULL; w = w->next) {
 				if (!strcmp(v->name, w->name)) {
 					char tmp[MAXSTRSIZE];
-					sprintf(tmp, "overloaded name: %s (at line %d)", v->name, v->DEF_LINE_NUM);
+					sprintf(tmp, "overloaded name: %s (at line %d)", v->name, v->LINE_NUM);
 					error(tmp);
 				}
 			}
@@ -59,14 +59,13 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 		for (variable_t *v = program.var; v != NULL; v = v->next) {
 			if (!strcmp(v->name, var_idr.name)) {
 				// ---
-				aprf_store(v->name, var_idr.APR_LINE_NUM);
+				aprf_store(v->name, var_idr.LINE_NUM);
 				// ---
 				return;
 			}
 		}
-	} else if (scope.kind == SCOPE_PROCEDURE) {
-		procedure_declared(program, scope.proc_name); // hitsuyou?
-
+	}
+	else if (scope.kind == SCOPE_PROCEDURE) {
 		for (procedure_t *p = program.proc; p != NULL; p = p->next) {
 			if (!strcmp(p->name, scope.proc_name)) {
 				for (variable_t *pp = p->param; pp != NULL; pp = pp->next) {
@@ -74,7 +73,7 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 						// ---
 						static char tmp[MAXSTRSIZE];
 						sprintf(tmp, "%s:%s", pp->name, scope.proc_name);
-						aprf_store(tmp, var_idr.APR_LINE_NUM);
+						aprf_store(tmp, var_idr.LINE_NUM);
 						// ---
 						return;
 					}
@@ -85,21 +84,30 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 						// ---
 						static char tmp[MAXSTRSIZE];
 						sprintf(tmp, "%s:%s", pv->name, scope.proc_name);
-						aprf_store(tmp, var_idr.APR_LINE_NUM);
+						aprf_store(tmp, var_idr.LINE_NUM);
 						// ---
 						return;
 					}
 				}
 			}
 		}
+
+		for (variable_t *v = program.var; v != NULL; v = v->next) {
+			if (!strcmp(v->name, var_idr.name)) {
+				// ---
+				aprf_store(v->name, var_idr.LINE_NUM);
+				// ---
+				return;
+			}
+		}
 	}
 
 	static char tmp[MAXSTRSIZE];
-	sprintf(tmp, "undeclared variable: %s (at line %d)", var_idr.name, var_idr.APR_LINE_NUM);
+	sprintf(tmp, "undeclared variable: %s (at line %d)", var_idr.name, var_idr.LINE_NUM);
 	error(tmp);
 }
 
-static void procedure_declared(program_t program, char *proc_name) {
+static void procedure_declared(program_t program, char *proc_name, int LINE_NUM) {
 	procedure_t *p;
 	for (p = program.proc; p != NULL; p = p->next) {
 		if (!strcmp(p->name, proc_name)) {
@@ -108,7 +116,7 @@ static void procedure_declared(program_t program, char *proc_name) {
 	}
 
 	static char tmp[MAXSTRSIZE];
-	sprintf(tmp, "undeclared procedure: %s", proc_name);
+	sprintf(tmp, "undeclared procedure: %s (at line %d)", proc_name, LINE_NUM);
 	error(tmp);
 }
 
@@ -203,9 +211,9 @@ static void name_declared_in_statement(program_t program, REF_SCOPE scope, state
 	} else if (stmt->kind == CALL) {
 		call_statement_t *s1 = (call_statement_t *)(stmt);
 
-		procedure_declared(program, s1->name);
+		procedure_declared(program, s1->name, s1->LINE_NUM);
 		// ---
-		aprf_store(s1->name, s1->APR_LINE_NUM);
+		aprf_store(s1->name, s1->LINE_NUM);
 		// ---
 		name_declared_in_expressions(program, scope, s1->param);
 
@@ -253,18 +261,31 @@ extern void name_analyze(program_t program) {
 
 /* --- type analyze ------------------------------------------------------------------- */
 // type matched ---------------------------------------------
-static int type_eq(type_t t1, type_t t2) {
-	if (t1.kind =! t2.kind) return 0;
+static int are_equal_types(type_t x, type_t y) {
+	if (x.kind != y.kind)
+		return 0;
 
-	if (t1.kind == STANDARD) {
-		return t1.standard == t2.standard;
+	if (x.kind == STANDARD) {
+		return x.standard == y.standard;
 	} else {
-		return t1.array.elem_type == t2.array.elem_type && t1.array.size == t2.array.size;		
+		return x.array.elem_type == y.array.elem_type && x.array.size == y.array.size;		
 	}
 }
 
-static int type_is_std_of(type_t t, standard_type_t stdtype) {
-	return t.kind == STANDARD && t.standard == stdtype;
+static int is_standard_type(type_t t) {
+	return t.kind == STANDARD;
+}
+
+static int is_standard_type_of(type_t t, standard_type_t stdt) {
+	return t.standard == stdt;
+}
+
+extern int type_eq(type_t t1, type_t t2) {
+	return are_equal_types(t1, t2);
+}
+
+extern int type_is_std_of(type_t t, standard_type_t stdtype) {
+	return is_standard_type(t) && is_standard_type_of(t, stdtype);
 }
 
 static void type_matched_in_variable_indicator(variable_indicator_t var_idr) {
@@ -272,7 +293,7 @@ static void type_matched_in_variable_indicator(variable_indicator_t var_idr) {
 		if (!((*var_idr.index).TYPE.kind == STANDARD
 			&& (*var_idr.index).TYPE.standard == INTEGER)) {
 			char tmp[MAXSTRSIZE];
-			sprintf(tmp, "type error (at line %d)", var_idr.APR_LINE_NUM);
+			sprintf(tmp, "type error (at line %d)", var_idr.LINE_NUM);
 			error(tmp);
 		}
 }
@@ -523,7 +544,7 @@ static void array_size_is_GT_0_in_variable_declaration(program_t program) {
 		if (v->type.kind == ARRAY) {
 			if (v->type.array.size <= 0) {
 				char tmp[MAXSTRSIZE];
-				sprintf(tmp, "array size error (at line %d)", v->DEF_LINE_NUM);
+				sprintf(tmp, "array size error (at line %d)", v->LINE_NUM);
 				error(tmp);
 			}
 		}
@@ -534,7 +555,7 @@ static void array_size_is_GT_0_in_variable_declaration(program_t program) {
 			if (v->type.kind == ARRAY) {
 				if (v->type.array.size <= 0) {
 					char tmp[MAXSTRSIZE];
-					sprintf(tmp, "array size error (at line %d)", v->DEF_LINE_NUM);
+					sprintf(tmp, "array size error (at line %d)", v->LINE_NUM);
 					error(tmp);
 				}
 			}
@@ -544,7 +565,7 @@ static void array_size_is_GT_0_in_variable_declaration(program_t program) {
 			if (v->type.kind == ARRAY) {
 				if (v->type.array.size <= 0) {
 					char tmp[MAXSTRSIZE];
-					sprintf(tmp, "array size error (at line %d)", v->DEF_LINE_NUM);
+					sprintf(tmp, "array size error (at line %d)", v->LINE_NUM);
 					error(tmp);
 				}
 			}
@@ -642,9 +663,9 @@ extern void print_xref_table(program_t program) {
 		int len = print_type_and_get_length(v->type);
 		for (int i = 0; len < whspltd && i < whspltd - len; i++) printf(" ");
 
-		printf("%d", v->DEF_LINE_NUM);
+		printf("%d", v->LINE_NUM);
 		int sizelen = 1;
-		int size = v->DEF_LINE_NUM;
+		int size = v->LINE_NUM;
 		while (size /= 10) sizelen++;
 		for (int i = 0; sizelen < whspldr && i < whspldr - sizelen; i++) printf(" ");
 
@@ -669,9 +690,9 @@ extern void print_xref_table(program_t program) {
 		printf(")");
 		for (int i = 0; len < whspltd && i < whspltd - len; i++) printf(" ");
 
-		printf("%d", p->DEF_LINE_NUM);
+		printf("%d", p->LINE_NUM);
 		int sizelen = 1;
-		int size = p->DEF_LINE_NUM;
+		int size = p->LINE_NUM;
 		while (size /= 10) sizelen++;
 		for (int i = 0; sizelen < whspldr && i < whspldr - sizelen; i++) printf(" ");
 
@@ -685,9 +706,9 @@ extern void print_xref_table(program_t program) {
 			int len = print_type_and_get_length(pp->type);
 			for (int i = 0; len < whspltd && i < whspltd - len; i++) printf(" ");
 
-			printf("%d", pp->DEF_LINE_NUM);
+			printf("%d", pp->LINE_NUM);
 			sizelen = 1;
-			size = pp->DEF_LINE_NUM;
+			size = pp->LINE_NUM;
 			while (size /= 10) sizelen++;
 			for (int i = 0; sizelen < whspldr && i < whspldr - sizelen; i++) printf(" ");
 
@@ -704,9 +725,9 @@ extern void print_xref_table(program_t program) {
 			int len = print_type_and_get_length(pv->type);
 			for (int i = 0; len < whspltd && i < whspltd - len; i++) printf(" ");
 
-			printf("%d", pv->DEF_LINE_NUM);
+			printf("%d", pv->LINE_NUM);
 			sizelen = 1;
-			size = pv->DEF_LINE_NUM;
+			size = pv->LINE_NUM;
 			while (size /= 10) sizelen++;
 			for (int i = 0; sizelen < whspldr && i < whspldr - sizelen; i++) printf(" ");
 

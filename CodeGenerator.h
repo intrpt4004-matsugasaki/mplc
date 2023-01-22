@@ -6,7 +6,14 @@
 
 extern char *get_stem(char *filename);
 
-static void dump(char *label_format, char *opcode /* or macro */, char *operand, char *comment, ...);
+typedef enum {
+	FEED_START,
+	FEED_LABEL, FEED_INST, FEED_COMM
+} FEED_STEP;
+
+static void LABEL(char *label_format, ...);
+static void INSTR(char *opcode, char *operand, ...);
+static void COMME(char *comment);
 
 static void generate_code_constant(FILE *fp, constant_t cons);
 static void generate_code_variable_indicator(FILE *fp, variable_indicator_t var_idr);
