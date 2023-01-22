@@ -1,28 +1,277 @@
-$unused1     DS     1
-$UnusedArrayForTest     DS     200
-$unusedchar     DS     1
-$unusedarray     DS     100
-$x1     DS     1
-$x2     DS     1
-$y1     DS     1
-$y2     DS     1
-$com     DS     1
-$endflag     DS     1
-$gcmlcm.a     DS     1
-$gcmlcm.b     DS     1
-$gcmlcm.r     DS     1
-$gcm.lc     DS     1
-$gcm.aa     DS     1
-$gcm.bb     DS     1
-$lcm.gc     DS     1
-$lcm.aa     DS     1
-$lcm.bb     DS     1
-$reduce.gc     DS     1
-$sum.lc     DS     1
-$sum.y11     DS     1
-$sub.lc     DS     1
-$sub.y11     DS     1
-$mult.gc     DS     1
-$mult.y22     DS     1
-$mult.y11     DS     1
-END
+$29p                      START      $main           
+                                                     ;  
+%unused1                  DS         1               
+%UnusedArrayForTest       DS         200             
+%unusedchar               DS         1               
+%unusedarray              DS         100             
+%x1                       DS         1               
+%x2                       DS         1               
+%y1                       DS         1               
+%y2                       DS         1               
+%com                      DS         1               
+%endflag                  DS         1               
+%gcmlcm.a                 DS         1               
+%gcmlcm.b                 DS         1               
+%gcmlcm.r                 DS         1               
+%gcm.lc                   DS         1               
+%gcm.aa                   DS         1               
+%gcm.bb                   DS         1               
+%lcm.gc                   DS         1               
+%lcm.aa                   DS         1               
+%lcm.bb                   DS         1               
+%reduce.gc                DS         1               
+%sum.lc                   DS         1               
+%sum.y11                  DS         1               
+%sub.lc                   DS         1               
+%sub.y11                  DS         1               
+%mult.gc                  DS         1               
+%mult.y22                 DS         1               
+%mult.y11                 DS         1               
+                                                     ;  
+$gcmlcm                   DS         0               
+                          RPOP                       
+                          ST         GR1, %a         
+                          ST         GR1, %b         
+#0                        NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #1              
+                          ST         GR1, %r         
+                          ST         GR1, %a         
+                          ST         GR1, %b         
+                          JUMP       #0              
+#1                        NOP        #0              
+                          ST         GR1, %gc        
+                          ST         GR1, %lc        
+                          RET                        
+$abs                      DS         0               
+                          RPOP                       
+                          CPL        GR1, ONE        
+                          JZ         #2              
+                          ST         GR1, %b         
+                          JUMP       #3              
+#2                        NOP                        
+                          ST         GR1, %b         
+#3                        NOP                        
+                          RET                        
+$gcm                      DS         0               
+                          RPOP                       
+                          CPL        GR1, ONE        
+                          JZ         #4              
+                          ST         GR1, %gc        
+                          JUMP       #5              
+#4                        NOP                        
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $abs            
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $abs            
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $gcmlcm         
+#5                        NOP                        
+                          RET                        
+$lcm                      DS         0               
+                          RPOP                       
+                          CPL        GR1, ONE        
+                          JZ         #6              
+                          ST         GR1, %lc        
+                          JUMP       #7              
+#6                        NOP                        
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $abs            
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $abs            
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $gcmlcm         
+#7                        NOP                        
+                          RET                        
+$reduce                   DS         0               
+                          RPOP                       
+                          CPL        GR1, ONE        
+                          JZ         #8              
+                          ST         GR1, %a2        
+                          RET                        
+                          JUMP       #9              
+#8                        NOP                        
+#9                        NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #10             
+                          ST         GR1, %a1        
+                          RET                        
+                          JUMP       #11             
+#10                       NOP                        
+#11                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #12             
+                          ST         GR1, %a1        
+                          ST         GR1, %a2        
+                          JUMP       #13             
+#12                       NOP                        
+#13                       NOP                        
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $gcm            
+                          ST         GR1, %a1        
+                          ST         GR1, %a2        
+                          RET                        
+$sum                      DS         0               
+                          RPOP                       
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $lcm            
+                          ST         GR1, %x1        
+                          ST         GR1, %y11       
+                          ST         GR1, %x1        
+                          ST         GR1, %x2        
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $reduce         
+                          RET                        
+$sub                      DS         0               
+                          RPOP                       
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $sum            
+                          RET                        
+$mult                     DS         0               
+                          RPOP                       
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $gcm            
+                          ST         GR1, %x1        
+                          ST         GR1, %y22       
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $gcm            
+                          ST         GR1, %x2        
+                          ST         GR1, %y11       
+                          ST         GR1, %x1        
+                          ST         GR1, %x2        
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $reduce         
+                          RET                        
+$divide                   DS         0               
+                          RPOP                       
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $mult           
+                          RET                        
+$printfinal               DS         0               
+                          RPOP                       
+                          CPL        GR1, ONE        
+                          JZ         #14             
+                          JUMP       #15             
+#14                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #16             
+                          JUMP       #17             
+#16                       NOP                        
+#17                       NOP                        
+#15                       NOP                        
+                          RET                        
+$printtemp                DS         0               
+                          RPOP                       
+                          CPL        GR1, ONE        
+                          JZ         #18             
+                          JUMP       #19             
+#18                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #20             
+                          JUMP       #21             
+#20                       NOP                        
+#21                       NOP                        
+#19                       NOP                        
+                          RET                        
+                                                     ;  
+$main                     DS         0               
+                          ST         GR1, %x1        
+                          ST         GR1, %x2        
+                          ST         GR1, %endflag   
+#22                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #23             
+                          ST         GR1, %y2        
+                          CPL        GR1, ONE        
+                          JZ         #24             
+                          ST         GR1, %x1        
+                          ST         GR1, %x2        
+                          JUMP       #25             
+#24                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #26             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $sum            
+                          JUMP       #27             
+#26                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #28             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $sub            
+                          JUMP       #29             
+#28                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #30             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $mult           
+                          JUMP       #31             
+#30                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #32             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $divide         
+                          JUMP       #33             
+#32                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #34             
+                          ST         GR1, %endflag   
+                          JUMP       #35             
+#34                       NOP                        
+#35                       NOP                        
+#33                       NOP                        
+#31                       NOP                        
+#29                       NOP                        
+#27                       NOP                        
+#25                       NOP                        
+                          CPL        GR1, ONE        
+                          JZ         #36             
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $printfinal     
+                          JUMP       #37             
+#36                       NOP                        
+                          PUSH       GR1             
+                          PUSH       GR1             
+                          CALL       $printtemp      
+#37                       NOP                        
+                          JUMP       #22             
+#23                       NOP        #22             
+                          END                        
