@@ -1,4 +1,4 @@
-$29p                      START      $main           
+$.\29p                    START      $main           
                           ; 
 %unused1                  DS         1               
 %UnusedArrayForTest       DS         200             

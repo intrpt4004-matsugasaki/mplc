@@ -13,6 +13,7 @@ typedef enum {
 
 static void LABEL(char *label_format, ...);
 static void INSTR(char *opcode, char *operand, ...);
+static void FEED();
 static void COMME(char *comment);
 
 static void generate_code_constant(FILE *fp, constant_t cons);
