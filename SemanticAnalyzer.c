@@ -163,7 +163,7 @@ static void name_declared_in_variable_indicators(program_t program, REF_SCOPE sc
 
 static void name_declared_output_formats(program_t program, REF_SCOPE scope, output_formats_t *fmts) {
 	for (output_formats_t *fp = fmts; fp != NULL; fp = fp->next) {
-		if (fp->format.kind = EXPR_MODE)
+		if (fp->format.kind == EXPR_MODE)
 			name_declared_in_expression(program, scope, fp->format.expr);
 	}
 }

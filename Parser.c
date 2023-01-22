@@ -733,6 +733,7 @@ static output_statement_t *read_output_statement() {
 	output_statement_t *output_stmt = malloc(sizeof(output_statement_t));
 	output_stmt->base.kind = OUTPUT;
 	output_stmt->base.next = NULL;
+	output_stmt->formats = NULL;
 
 	if (is(TWRITE)) {
 		read(TWRITE, "'write' is not found.");

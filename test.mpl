@@ -43,9 +43,10 @@ begin
 	return;
 
 	if (true) then begin
-		break;
-		c3 := 4;
-		return;
+		while (true) do begin
+			c3 := 3;
+			return;
+		end
 	end else begin
 		break;
 		c4 := 4;
