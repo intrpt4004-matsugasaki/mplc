@@ -1,9 +1,9 @@
 #include "SemanticAnalyzer.h"
 
-// ---
+// print xref table -----------------------------------------
 static apr_file aprf[100];
 static int aprf_length = 0;
-// ---
+// ----------------------------------------------------------
 
 static void error(char *message) {
 	/* ERROR */
@@ -11,6 +11,7 @@ static void error(char *message) {
 	exit(-1);
 }
 
+// overloaded name ------------------------------------------
 static void there_is_no_overloaded_name(program_t program) {
 	// program block
 	for (variable_t *v = program.var; v != NULL; v = v->next) {
@@ -49,13 +50,14 @@ static void there_is_no_overloaded_name(program_t program) {
 		}
 	}
 }
+// ----------------------------------------------------------
 
+// undeclared name ------------------------------------------
 static void variable_declared(program_t program, REF_SCOPE scope, variable_indicator_t var_idr) {
 	if (scope.kind == SCOPE_PROGRAM) {
 		for (variable_t *v = program.var; v != NULL; v = v->next) {
 			if (!strcmp(v->name, var_idr.name)) {
 				// ---
-				printf("prog-var: %s\n", v->name);
 				aprf_store(v->name, var_idr.APR_LINE_NUM);
 				// ---
 				return;
@@ -72,7 +74,6 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 						static char tmp[MAXSTRSIZE];
 						sprintf(tmp, "%s:%s", pp->name, scope.proc_name);
 						aprf_store(tmp, var_idr.APR_LINE_NUM);
-						printf("proc-param: %s\n", tmp);
 						// ---
 						return;
 					}
@@ -84,7 +85,6 @@ static void variable_declared(program_t program, REF_SCOPE scope, variable_indic
 						static char tmp[MAXSTRSIZE];
 						sprintf(tmp, "%s:%s", pv->name, scope.proc_name);
 						aprf_store(tmp, var_idr.APR_LINE_NUM);
-						printf("proc-var: %s\n", tmp);
 						// ---
 						return;
 					}
@@ -109,6 +109,13 @@ static void procedure_declared(program_t program, char *proc_name) {
 	static char tmp[MAXSTRSIZE];
 	sprintf(tmp, "undeclared procedure: %s", proc_name);
 	error(tmp);
+}
+
+static void name_declared_in_variable_indicator(program_t program, REF_SCOPE scope, variable_indicator_t var_idr) {
+	variable_declared(program, scope, var_idr);
+
+	if (var_idr.is_array)
+		name_declared_in_expression(program, scope, *var_idr.index);
 }
 
 static void name_declared_in_factor(program_t program, REF_SCOPE scope, factor_t factor) {
@@ -148,43 +155,35 @@ static void name_declared_in_expressions(program_t program, REF_SCOPE scope, exp
 	}
 }
 
-static void name_declared_in_variable_indicator(program_t program, REF_SCOPE scope, variable_indicator_t var_idr) {
-	variable_declared(program, scope, var_idr);
-
-	if (var_idr.is_array)
-		name_declared_in_expression(program, scope, *var_idr.index);
-}
-
 static void name_declared_in_variable_indicators(program_t program, REF_SCOPE scope, variable_indicators_t *var_idrs) {
 	for (variable_indicators_t *ip = var_idrs; ip != NULL; ip = ip->next) {
 		name_declared_in_variable_indicator(program, scope, ip->var_idr);
 	}
 }
 
+static void name_declared_output_format(program_t program, REF_SCOPE scope, output_format_t fmt) {
+	if (fmt.kind == EXPR_MODE)
+		name_declared_in_expression(program, scope, fmt.expr);
+}
+
 static void name_declared_output_formats(program_t program, REF_SCOPE scope, output_formats_t *fmts) {
 	for (output_formats_t *fp = fmts; fp != NULL; fp = fp->next) {
-		if (fp->format.kind == EXPR_MODE)
-			name_declared_in_expression(program, scope, fp->format.expr);
+		name_declared_output_format(program, scope, fp->format);
 	}
 }
 
-static void name_declared_in_statement(program_t program, REF_SCOPE scope, statement_t *s) {
-	if (s == NULL)
+static void name_declared_in_statement(program_t program, REF_SCOPE scope, statement_t *stmt) {
+	if (stmt == NULL)
 		return;
 
-	if (s->kind == ASSIGN) {
-		assignment_statement_t *s1 = (assignment_statement_t *)(s);
+	if (stmt->kind == ASSIGN) {
+		assignment_statement_t *s1 = (assignment_statement_t *)(stmt);
 
-		printf("ASSIGN:   \n   %s\n", s1->target_var_idr.name);
 		variable_declared(program, scope, s1->target_var_idr);
-
-		if (s1->target_var_idr.is_array)
-			name_declared_in_expression(program, scope, *s1->target_var_idr.index);
-
 		name_declared_in_expression(program, scope, s1->expr);
 
-	} else if (s->kind == CONDITION) {
-		condition_statement_t *s1 = (condition_statement_t *)(s);
+	} else if (stmt->kind == CONDITION) {
+		condition_statement_t *s1 = (condition_statement_t *)(stmt);
 
 		name_declared_in_expression(program, scope, s1->cond);
 		name_declared_in_statement(program, scope, s1->then_stmt);
@@ -192,40 +191,33 @@ static void name_declared_in_statement(program_t program, REF_SCOPE scope, state
 		if (s1->has_else_stmt)
 			name_declared_in_statement(program, scope, s1->else_stmt);
 
-	} else if (s->kind == ITERATION) {
-		iteration_statement_t *s1 = (iteration_statement_t *)(s);
+	} else if (stmt->kind == ITERATION) {
+		iteration_statement_t *s1 = (iteration_statement_t *)(stmt);
 
 		name_declared_in_expression(program, scope, s1->cond);
 		name_declared_in_statement(program, scope, s1->loop_stmt);
 
-	} else if (s->kind == CALL) {
-		call_statement_t *s1 = (call_statement_t *)(s);
+	} else if (stmt->kind == CALL) {
+		call_statement_t *s1 = (call_statement_t *)(stmt);
 
 		procedure_declared(program, s1->name);
 		// ---
-		printf("CALL: \n   %s\n", s1->name);
 		aprf_store(s1->name, s1->APR_LINE_NUM);
 		// ---
 		name_declared_in_expressions(program, scope, s1->param);
 
-	} else if (s->kind == INPUT) {
-		input_statement_t *s1 = (input_statement_t *)(s);
-
-		printf("INPUT: \n");
-		for (variable_indicators_t *i = s1->target_var_idrs; i != NULL; i = i->next) {
-			printf("   %s\n", i->var_idr.name);
-		}
+	} else if (stmt->kind == INPUT) {
+		input_statement_t *s1 = (input_statement_t *)(stmt);
 
 		name_declared_in_variable_indicators(program, scope, s1->target_var_idrs);
 
-	} else if (s->kind == OUTPUT) {
-		output_statement_t *s1 = (output_statement_t *)(s);
+	} else if (stmt->kind == OUTPUT) {
+		output_statement_t *s1 = (output_statement_t *)(stmt);
 
-		printf("OUTPUT: \n");
 		name_declared_output_formats(program, scope, s1->formats);
 	}
 
-	name_declared_in_statement(program, scope, s->next);
+	name_declared_in_statement(program, scope, stmt->next);
 }
 
 static void there_is_no_undeclared_name(program_t program) {
@@ -243,7 +235,21 @@ static void there_is_no_undeclared_name(program_t program) {
 		name_declared_in_statement(program, scope, p->stmt);
 	}
 }
+// ----------------------------------------------------------
 
+// ----------------------------------------------------------
+// ----------------------------------------------------------
+// ----------------------------------------------------------
+
+// ----------------------------------------------------------
+// ----------------------------------------------------------
+// ----------------------------------------------------------
+
+// ----------------------------------------------------------
+// ----------------------------------------------------------
+// ----------------------------------------------------------
+
+// semantic analyze -----------------------------------------
 extern void name_analyze(program_t program) {
 	//---
 	for (int i = 0; i < 100; i++) {
@@ -256,7 +262,9 @@ extern void name_analyze(program_t program) {
 
 extern void type_analyze(program_t program) {
 }
+// ----------------------------------------------------------
 
+// print xref table -----------------------------------------
 static void aprf_store(char *name, int apr_line_num) {
 	int i = aprf_search(name);
 
@@ -404,3 +412,4 @@ extern void print_xref_table(program_t program) {
 		}
 	}
 }
+// ----------------------------------------------------------

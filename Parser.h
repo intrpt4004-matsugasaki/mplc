@@ -126,7 +126,7 @@ typedef struct {
 	struct expression_t *index;
 
 	/* type allocation */
-	standard_type_t TYPE;
+	type_t TYPE;
 
 	/* debug information */
 	int APR_LINE_NUM;
@@ -146,7 +146,7 @@ typedef struct factor_t {
 	standard_type_t std_type;
 
 	/* type allocation */
-	standard_type_t TYPE;
+	type_t TYPE;
 } factor_t;
 
 typedef struct term_t {
@@ -156,7 +156,7 @@ typedef struct term_t {
 	struct term_t *next;
 
 	/* type allocation */
-	standard_type_t TYPE;
+	type_t TYPE;
 } term_t;
 
 typedef struct simple_expression_t {
@@ -167,7 +167,7 @@ typedef struct simple_expression_t {
 	struct simple_expression_t *next;
 
 	/* type allocation */
-	standard_type_t TYPE;
+	type_t TYPE;
 } simple_expression_t;
 
 typedef struct expression_t {
@@ -177,7 +177,7 @@ typedef struct expression_t {
 	struct expression_t *next;
 
 	/* type allocation */
-	standard_type_t TYPE;
+	type_t TYPE;
 } expression_t;
 
 static int is_constant();
@@ -299,6 +299,9 @@ typedef struct {
 	int expr_num;
 
 	char string[MAXSTRSIZE];
+
+	/* type allocation */
+	type_t TYPE;
 } output_format_t;
 
 typedef struct output_formats_t {
@@ -343,7 +346,8 @@ typedef struct procedure_t {
 	struct procedure_t *next;
 
 	/* type allocation */
-	type_t *PARAM_TYPE;
+	int ARITY;
+	type_t *TYPE;
 
 	/* debug information */
 	int DEF_LINE_NUM;
@@ -373,6 +377,3 @@ extern program_t parse_program();
 /* ------------------------------------------------------------------------------------ */
 
 #endif
-
-/* TODO: ~s type -> pointer of pointer */
-/* BUG: LINE_NUM */
