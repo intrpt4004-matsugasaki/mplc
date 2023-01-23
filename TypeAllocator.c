@@ -4,15 +4,14 @@ static void allocate_type_in_constant(constant_t *cons) {
 	if (cons->kind == NUMBER) {
 		cons->TYPE.kind = STANDARD;
 		cons->TYPE.standard = INTEGER;
-
-	} else if (cons->kind == FALSE || cons->kind == TRUE) {
+	}
+	else if (cons->kind == FALSE || cons->kind == TRUE) {
 		cons->TYPE.kind = STANDARD;
 		cons->TYPE.standard = BOOLEAN;
-
-	} else if (cons->kind == STRING) {
-		cons->TYPE.kind = ARRAY;
-		cons->TYPE.array.elem_type = CHAR;
-		cons->TYPE.array.size = strlen(cons->string);
+	}
+	else if (cons->kind == STRING) {
+		cons->TYPE.kind = STANDARD;
+		cons->TYPE.standard = CHAR;
 	}
 }
 
@@ -27,8 +26,8 @@ static void allocate_type_in_variable_indicator(program_t *program, REF_SCOPE sc
 				return;
 			}
 		}
-
-	} else if (scope.kind == SCOPE_PROCEDURE) {
+	}
+	else if (scope.kind == SCOPE_PROCEDURE) {
 		for (procedure_t *p = program->proc; p != NULL; p = p->next) {
 			if (!strcmp(p->name, scope.proc_name)) {
 				for (variable_t *pp = p->param; pp != NULL; pp = pp->next) {
@@ -44,6 +43,13 @@ static void allocate_type_in_variable_indicator(program_t *program, REF_SCOPE sc
 						return;
 					}
 				}
+			}
+		}
+
+		for (variable_t *v = program->var; v != NULL; v = v->next) {
+			if (!strcmp(v->name, var_idr->name)) {
+				var_idr->TYPE = v->type;
+				return;
 			}
 		}
 	}

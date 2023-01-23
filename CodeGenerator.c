@@ -1,9 +1,7 @@
 #include "CodeGenerator.h"
 
-static int Lcnt = 0;
-
 extern char *get_stem(char *filename) {
-	char *stem = malloc(sizeof(char) * MAXSTRSIZE);
+	char *stem = malloc(sizeof(char) * strlen(filename));
 	strcpy(stem, filename);
 
 	int i = 0;
@@ -13,6 +11,12 @@ extern char *get_stem(char *filename) {
 		stem[i] = '\0';
 
 	return stem;
+}
+
+extern char *assign_csl_ext(char *stem) {
+	char *filename = malloc(sizeof(char) * (strlen(stem) + 4));
+	sprintf(filename, "%s.csl", stem);
+	return filename;
 }
 
 static FILE *feedee;
@@ -41,7 +45,7 @@ static void LABEL(char *label_format, ...) {
 	step = FEED_INST;
 }
 
-static void INSTR(char *opcode, char *operand_format, ...) {
+static void INST(char *opcode, char *operand_format, ...) {
 	if (step == FEED_START || step == FEED_COMM) {
 		fprintf(feedee, "\n");
 		for (int i = 0; i < 25; i++) fprintf(feedee, " ");
@@ -89,8 +93,10 @@ static void COMME(char *comment) {
 	fprintf(feedee, "; %s", comment);
 	fprintf(feedee, "\n");
 
-	step == FEED_START;
+	step = FEED_START;
 }
+
+static int Lcnt = 0;
 
 static void generate_code_constant(FILE *feedee, constant_t cons) {
 }
@@ -151,37 +157,37 @@ static void generate_code_statement(FILE *feedee, statement_t *stmt) {
 
 		for (expressions_t *ep = s1->param; ep != NULL; ep = ep->next) {
 			generate_code_expression(feedee, ep->expr);
-			INSTR("PUSH", "GR1");
+			INST("PUSH", "GR1");
 		}
 	
-		INSTR("CALL", "$%s", s1->name);
+		INST("CALL", "$%s", s1->name);
 	}
 	else if (stmt->kind == ITERATION) {
 		iteration_statement_t *s1 = (iteration_statement_t *)(stmt);
 
 		int l = Lcnt; Lcnt += 2;
-		LABEL("#%d", l); INSTR("NOP", "");
+		LABEL("#%d", l); INST("NOP", "");
 		generate_code_expression(feedee, s1->cond);
-		INSTR("CPL", "GR1, ONE");
-		INSTR("JZ", "#%d", l+1);
+		INST("CPL", "GR1, ONE");
+		INST("JZ", "#%d", l+1);
 		generate_code_statement(feedee, s1->loop_stmt);
-		INSTR("JUMP", "#%d", l);
-		LABEL("#%d", l+1); INSTR("NOP", "");
+		INST("JUMP", "#%d", l);
+		LABEL("#%d", l+1); INST("NOP", "");
 	}
 	else if (stmt->kind == CONDITION) {
 		condition_statement_t *s1 = (condition_statement_t *)(stmt);
 
 		int l = Lcnt; Lcnt += 2;
 		generate_code_expression(feedee, s1->cond);
-		INSTR("CPL", "GR1, ONE");
-		INSTR("JZ", "#%d", l);
+		INST("CPL", "GR1, ONE");
+		INST("JZ", "#%d", l);
 		generate_code_statement(feedee, s1->then_stmt);
-		INSTR("JUMP", "#%d", l+1);
-		LABEL("#%d", l); INSTR("NOP", "");
+		INST("JUMP", "#%d", l+1);
+		LABEL("#%d", l); INST("NOP", "");
 		if (s1->has_else_stmt) {
 			generate_code_statement(feedee, s1->else_stmt);
 		}
-		LABEL("#%d", l+1); INSTR("NOP", "");
+		LABEL("#%d", l+1); INST("NOP", "");
 	}
 	else if (stmt->kind == ASSIGN) {
 		assignment_statement_t *s1 = (assignment_statement_t *)(stmt);
@@ -190,13 +196,13 @@ static void generate_code_statement(FILE *feedee, statement_t *stmt) {
 		if (s1->target_var_idr.is_array) {
 			//
 		}
-		INSTR("ST", "GR1, %%%s", s1->target_var_idr.name);
+		INST("ST", "GR1, %%%s", s1->target_var_idr.name);
 	}
 	else if (stmt->kind == EXIT) {
 		// break loop
 	}
 	else if (stmt->kind == RETURN) {
-		INSTR("RET", "");
+		INST("RET", "");
 	}
 	else if (stmt->kind == INPUT) {
 		//
@@ -221,45 +227,46 @@ extern void generate_code(char *filename, program_t program) {
 	Lcnt = 0;
 	char tmp[MAXSTRSIZE];
 
-	LABEL("$%s", get_stem(filename)); INSTR("START", "$main");
+	LABEL("$%s", get_stem(filename)); INST("START", "$main");
 	FEED(); COMME("");
 
 	// program block
 	for (variable_t *v = program.var; v != NULL; v = v->next) {
-		LABEL("%%%s", v->name); INSTR("DS", "%d", get_variable_size(v));
+		LABEL("%%%s", v->name); INST("DS", "%d", get_variable_size(v));
 	}
 	FEED(); COMME("");
 
 	// procedure block
 	for (procedure_t *p = program.proc; p != NULL; p = p->next) {
 		for (variable_t *v = p->var; v != NULL; v = v->next) {
-			LABEL("%%%s.%s", p->name, v->name); INSTR("DS", "%d", get_variable_size(v));
+			LABEL("%%%s.%s", p->name, v->name); INST("DS", "%d", get_variable_size(v));
 		}
 		if (step != FEED_START) {
 			FEED();
 			COMME("");
 		}
 
-		LABEL("$%s", p->name); INSTR("DS", "0");
+		LABEL("$%s", p->name); INST("DS", "0");
 
 //		for (variable_t *pp = p->param; pp != NULL; pp = pp->next) {
-		INSTR("RPOP", ""); // parameter>8 ???: call stack
+		INST("RPOP", ""); // parameter>8 ???: call stack
 //		}
 
 		generate_code_statement(feedee, p->stmt);
-		INSTR("RET", "");
+		INST("RET", "");
 		FEED(); COMME("");
 	}
 
-	LABEL("$main"); INSTR("DS", "0");
+	LABEL("$main"); INST("DS", "0");
 	generate_code_statement(feedee, program.stmt);
-	INSTR("END", "");
+	INST("END", "");
 
 	outlib();
 	fclose(feedee);
 }
 
 static void outlib() {
+	FEED(); COMME("");
 	FEED();
   fprintf(feedee, ""
 "; ------------------------\n"

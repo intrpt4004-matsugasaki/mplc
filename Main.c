@@ -38,10 +38,6 @@ int main(const int argc, char *argv[]) {
 	allocate_type(&p);
 	type_analyze(p);
 	print_xref_table(p);
-
 	//optimize_code(&p);
-
-	char obj[MAXSTRSIZE];
-	sprintf(obj, "%s.csl", get_stem(argv[1]));
-	generate_code(obj, p);
+	generate_code(assign_csl_ext(get_stem(argv[1])), p);
 }

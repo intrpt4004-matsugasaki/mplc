@@ -576,10 +576,10 @@ static void array_size_is_GT_0_in_variable_declaration(program_t program) {
 static void type_matched(program_t program) {
 	array_size_is_GT_0_in_variable_declaration(program);
 
-	//type_matched_in_statement(program.stmt);
+	type_matched_in_statement(program.stmt);
 
 	for (procedure_t *p = program.proc; p != NULL; p = p->next) {
-		//type_matched_in_statement(p->stmt);
+		type_matched_in_statement(p->stmt);
 	}
 }
 // ----------------------------------------------------------

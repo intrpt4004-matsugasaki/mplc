@@ -5,6 +5,7 @@
 #include "Parser.h"
 
 extern char *get_stem(char *filename);
+extern char *assign_csl_ext(char *stem);
 
 typedef enum {
 	FEED_START,
@@ -12,7 +13,7 @@ typedef enum {
 } FEED_STEP;
 
 static void LABEL(char *label_format, ...);
-static void INSTR(char *opcode, char *operand, ...);
+static void INST(char *opcode, char *operand, ...);
 static void FEED();
 static void COMME(char *comment);
 
