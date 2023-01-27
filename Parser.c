@@ -295,30 +295,33 @@ static constant_t read_constant() {
 	/* debug information */
 	constant.LINE_NUM = token.line_num;
 
-
 	if (is(TNUMBER)) {
-		read(TNUMBER, "number is not found.");
 		constant.kind = NUMBER;
 		constant.number = token.number;
+
+		read(TNUMBER, "number is not found.");
 		return constant;
 	}
 
 	if (is(TFALSE)) {
-		read(TFALSE, "'false' is not found.");
 		constant.kind = FALSE;
+
+		read(TFALSE, "'false' is not found.");
 		return constant;
 	}
 
 	if (is(TTRUE)) {
-		read(TTRUE, "'true' is not found.");
 		constant.kind = TRUE;
+
+		read(TTRUE, "'true' is not found.");
 		return constant;
 	}
 
 	if (is(TSTRING)) {
-		read(TSTRING, "string is not found.");
 		constant.kind = STRING;
 		strcpy(constant.string, token.string);
+
+		read(TSTRING, "string is not found.");
 		return constant;
 	}
 

@@ -79,7 +79,7 @@ static void FEED() {
 	step = FEED_START;
 }
 
-static void COMME(char *comment) {
+static void COMM(char *comment) {
 	if (!(step == FEED_START || step == FEED_COMM)) {
 		printf("[ERROR] CodeGenerator: construction error\n");
 		exit(-1);
@@ -228,13 +228,13 @@ extern void generate_code(char *filename, program_t program) {
 	char tmp[MAXSTRSIZE];
 
 	LABEL("$%s", get_stem(filename)); INST("START", "$main");
-	FEED(); COMME("");
+	FEED(); COMM("");
 
 	// program block
 	for (variable_t *v = program.var; v != NULL; v = v->next) {
 		LABEL("%%%s", v->name); INST("DS", "%d", get_variable_size(v));
 	}
-	FEED(); COMME("");
+	FEED(); COMM("");
 
 	// procedure block
 	for (procedure_t *p = program.proc; p != NULL; p = p->next) {
@@ -243,7 +243,7 @@ extern void generate_code(char *filename, program_t program) {
 		}
 		if (step != FEED_START) {
 			FEED();
-			COMME("");
+			COMM("");
 		}
 
 		LABEL("$%s", p->name); INST("DS", "0");
@@ -254,7 +254,7 @@ extern void generate_code(char *filename, program_t program) {
 
 		generate_code_statement(feedee, p->stmt);
 		INST("RET", "");
-		FEED(); COMME("");
+		FEED(); COMM("");
 	}
 
 	LABEL("$main"); INST("DS", "0");
@@ -266,7 +266,7 @@ extern void generate_code(char *filename, program_t program) {
 }
 
 static void outlib() {
-	FEED(); COMME("");
+	FEED(); COMM("");
 	FEED();
   fprintf(feedee, ""
 "; ------------------------\n"
