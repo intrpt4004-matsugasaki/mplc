@@ -218,9 +218,10 @@ static void allocate_type_in_output_format(program_t *program, REF_SCOPE scope, 
 		fmt->TYPE.kind = ARRAY;
 		fmt->TYPE.array.elem_type = CHAR;
 		fmt->TYPE.array.size = strlen(fmt->string);
+		printf("'%s'", fmt->string);
 	}
 
-//	printf("\t:%s (ofmt)\n", get_type(fmt->TYPE));
+	printf(":%s (ofmt)\n", get_type(fmt->TYPE));
 }
 
 static void allocate_type_in_output_formats(program_t *program, REF_SCOPE scope, output_formats_t *fmts) {
