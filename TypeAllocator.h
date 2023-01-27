@@ -3,6 +3,7 @@
 
 #include "Parser.h"
 #include "SemanticAnalyzer.h"
+#include "Debug.h"
 
 static void allocate_type_in_constant(constant_t *cons);
 static void allocate_type_in_variable_indicator(program_t *program, REF_SCOPE scope, variable_indicator_t *var_idr);

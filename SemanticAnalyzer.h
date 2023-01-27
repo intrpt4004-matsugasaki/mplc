@@ -2,6 +2,7 @@
 #define SemanticAnalyzer_h
 
 #include "Parser.h"
+#include "Debug.h"
 
 static void error(char *message);
 

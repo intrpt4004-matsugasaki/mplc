@@ -390,6 +390,8 @@ static void type_matched_in_expression(expression_t expr) {
 
 		if (!type_eq(expr.TYPE, (*expr.next).TYPE)) {
 			char tmp[MAXSTRSIZE];
+			print_expression(expr);printf("\n");
+			printf("%d %d %d", expr.TYPE.standard == INTEGER, expr.rel_opr == NOT_EQUAL, (*expr.next).TYPE.standard == INTEGER);
 			sprintf(tmp, "type error [expr rel_opr expr] (at line %d)", expr.LINE_NUM);
 			error(tmp);
 		}

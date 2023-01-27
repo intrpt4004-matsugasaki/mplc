@@ -1,7 +1,7 @@
 /********************************************
  * mplc: mpl compiler                       *
  *                                          *
- * $ gcc -std=c99 -pedantic                 *
+ * $ gcc -std=c99 -pedantic Debug.c         *
  *     Main.c Scanner.c Parser.c            *
  *       SemanticAnalyzer.c                 *
  *         TypeAllocator.c CodeGenerator.c  *
@@ -41,3 +41,14 @@ int main(const int argc, char *argv[]) {
 	//optimize_code(&p);
 	generate_code(assign_csl_ext(get_stem(argv[1])), p);
 }
+
+/* TODO */
+/*
+ * impl: Debug.c
+ * BUG FIX: type checker (and type allocator?)
+ *
+ * impl: Code Generator
+ *
+ * Scanner -> Tokenizer: file -> [token_t]
+ * Parser: [token_t] -> program_t
+ */

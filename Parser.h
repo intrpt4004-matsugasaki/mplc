@@ -15,8 +15,8 @@ typedef struct {
 
 static void update_token();
 
-static int is(const int TOKEN_CODE);
-static void read(const int TOKEN_CODE, char *error_message);
+static int is(const token_code_t token_code);
+static void read(const token_code_t token_code, char *error_message);
 static void error(char *message);
 /* ------------------------------------------------------------------------------------ */
 
@@ -82,12 +82,12 @@ typedef struct statement_t {
 
 // operator -------------------------------------------------
 typedef enum {
-	PLUS, MINUS, OR
-} additive_operator_t;
-
-typedef enum {
 	ASTERISK, DIV, AND
 } multiplicative_operator_t;
+
+typedef enum {
+	PLUS, MINUS, OR
+} additive_operator_t;
 
 typedef enum {
 	EQUAL, NOT_EQUAL,
@@ -95,11 +95,11 @@ typedef enum {
 	GREATER, GREATER_OR_EQUAL
 } relational_operator_t;
 
-static int is_additive_operator();
-static additive_operator_t read_additive_operator();
-
 static int is_multiplicative_operator();
 static multiplicative_operator_t read_multiplicative_operator();
+
+static int is_additive_operator();
+static additive_operator_t read_additive_operator();
 
 static int is_relational_operator();
 static relational_operator_t read_relational_operator();

@@ -9,7 +9,7 @@
 #define MAXSTRSIZE 1024
 #define LOOKAHEADDEPTH 10
 
-enum {
+typedef enum {
 	TNAME = 1,
 	TPROGRAM,
 	TVAR, TARRAY, TOF,
@@ -27,9 +27,7 @@ enum {
 	TLPAREN, TRPAREN, TLSQPAREN, TRSQPAREN,
 	TASSIGN, TDOT, TCOMMA, TCOLON, TSEMI,
 	TREAD, TWRITE, TBREAK
-};
-
-extern char *tokencode_to_str(const int CODE);
+} token_code_t;
 
 extern int init_scan(char *filename);
 extern int scan();

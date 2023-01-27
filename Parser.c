@@ -12,12 +12,12 @@ static void update_token() {
 	token.line_num = get_linenum();
 }
 
-static int is(const int TOKEN_CODE) {
-	return (token.code == TOKEN_CODE);
+static int is(const token_code_t token_code) {
+	return (token.code == token_code);
 }
 
-static void read(const int TOKEN_CODE, char *error_message) {
-	if (!is(TOKEN_CODE))
+static void read(const token_code_t token_code, char *error_message) {
+	if (!is(token_code))
 		error(error_message);
 
 	update_token();
@@ -179,34 +179,6 @@ static variable_t *read_variable_declaration() {
 
 /* --- statement ---------------------------------------------------------------------- */
 // operator -------------------------------------------------
-static int is_additive_operator() {
-	return is(TPLUS) || is(TMINUS) || is(TOR);
-}
-
-static additive_operator_t read_additive_operator() {
-	additive_operator_t add_opr;
-
-	if (is(TPLUS)) {
-		read(TPLUS, "'+' is not found.");
-		add_opr = PLUS;
-		return add_opr;
-	}
-
-	if (is(TMINUS)) {
-		read(TMINUS, "'-' is not found.");
-		add_opr = MINUS;
-		return add_opr;
-	}
-
-	if (is(TOR)) {
-		read(TOR, "'or' is not found.");
-		add_opr = OR;
-		return add_opr;
-	}
-
-	error("unmatched on read_additive_operator.");	
-}
-
 static int is_multiplicative_operator() {
 	return is(TSTAR) || is(TDIV) || is(TAND);
 }
@@ -233,6 +205,34 @@ static multiplicative_operator_t read_multiplicative_operator() {
 	}
 
 	error("unmatched on read_multiplicative_operator.");	
+}
+
+static int is_additive_operator() {
+	return is(TPLUS) || is(TMINUS) || is(TOR);
+}
+
+static additive_operator_t read_additive_operator() {
+	additive_operator_t add_opr;
+
+	if (is(TPLUS)) {
+		read(TPLUS, "'+' is not found.");
+		add_opr = PLUS;
+		return add_opr;
+	}
+
+	if (is(TMINUS)) {
+		read(TMINUS, "'-' is not found.");
+		add_opr = MINUS;
+		return add_opr;
+	}
+
+	if (is(TOR)) {
+		read(TOR, "'or' is not found.");
+		add_opr = OR;
+		return add_opr;
+	}
+
+	error("unmatched on read_additive_operator.");	
 }
 
 static int is_relational_operator() {
