@@ -390,9 +390,8 @@ static void type_matched_in_expression(expression_t expr) {
 
 		if (!type_eq(expr.TYPE, (*expr.next).TYPE)) {
 			char tmp[MAXSTRSIZE];
-			print_expression(expr);printf("\n");
-			printf("%d %d %d", expr.TYPE.standard == INTEGER, expr.rel_opr == NOT_EQUAL, (*expr.next).TYPE.standard == INTEGER);
-			sprintf(tmp, "type error [expr rel_opr expr] (at line %d)", expr.LINE_NUM);
+			print_expression(expr); printf("\n");
+			sprintf(tmp, "type error in [expression relational_operator expression] (at line %d)", expr.LINE_NUM);
 			error(tmp);
 		}
 	}
@@ -461,8 +460,7 @@ static void type_matched_in_output_formats(output_formats_t *fmts) { // out stmt
 }
 
 static void condition_type_is_boolean_in_condition_statement(condition_statement_t *cond_stmt) {
-	if (!(cond_stmt->cond.TYPE.kind == STANDARD
-		&& cond_stmt->cond.TYPE.standard == BOOLEAN)) {
+	if (!type_is_std_of(cond_stmt->cond.WHOLE_TYPE, BOOLEAN)) {
 		char tmp[MAXSTRSIZE];
 		sprintf(tmp, "condition type is not boolean (at line %d)", cond_stmt->cond.LINE_NUM);
 		error(tmp);
@@ -470,8 +468,7 @@ static void condition_type_is_boolean_in_condition_statement(condition_statement
 }
 
 static void condition_type_is_boolean_in_iteration_statement(iteration_statement_t *iter_stmt) {
-	if (!(iter_stmt->cond.TYPE.kind == STANDARD
-		&& iter_stmt->cond.TYPE.standard == BOOLEAN)) {
+	if (!type_is_std_of(iter_stmt->cond.WHOLE_TYPE, BOOLEAN)) {
 		char tmp[MAXSTRSIZE];
 		sprintf(tmp, "condition type is not boolean (at line %d)", iter_stmt->cond.LINE_NUM);
 		error(tmp);

@@ -108,40 +108,47 @@ extern char *boolean_s(const constant_t cons) {
 }
 
 extern void print_constant(const constant_t cons) {
-	switch (cons.kind) {
-		NUMBER:
-			printf("%d", cons.number);
-			break;
-		TRUE:
-			printf("true");
-			break;
-		FALSE:
-			printf("false");
-			break;
-		STRING:
-			printf("%s", cons.string);
-			break;
+	if (cons.kind == NUMBER) { // nazeka switch deha ugokanai.
+		printf("%d", cons.number);
+	}
+	else if (cons.kind == TRUE) {
+		printf("true");
+	}
+	else if (cons.kind == FALSE) {
+		printf("false");
+	}
+	else if (cons.kind == STRING) {
+		printf("%s", cons.string);
+	}
+}
+
+extern void print_variable_indicator(const variable_indicator_t var_idr) {
+	printf("%s", var_idr.name);
+
+	if (var_idr.is_array) {
+		printf("[");
+		print_expression(*var_idr.index);
+		printf("]");
 	}
 }
 
 extern void print_factor(const factor_t factor) {
-	switch (factor.kind) {
-		case VAR_IDR:
-			break;
-		case CONST:
-			print_constant(factor.cons);
-			break;
-		case EXPR:
-			print_expression(*factor.expr);
-			break;
-		case INVERT_FACTOR:
-			printf("!");
-			print_factor(*factor.inv_factor);
-			break;
-		case CAST_EXPR:
-			printf("(%s)", standard_type_s(factor.cast_std_type));
-			print_expression(*factor.cast_expr);
-			break;
+	if (factor.kind == VAR_IDR) { // nazeka switch deha ugokanai.
+		print_variable_indicator(factor.var_idr);
+	}
+	else if (factor.kind == CONST) {
+		print_constant(factor.cons);
+	}
+	else if (factor.kind == EXPR) {
+		print_expression(*factor.expr);
+	}
+	else if (factor.kind == INVERT_FACTOR) {
+		printf("!");
+		print_factor(*factor.inv_factor);
+	}
+	else if (factor.kind == CAST_EXPR) {
+		printf("(%s)", standard_type_s(factor.cast_std_type));
+		print_expression(*factor.cast_expr);
 	}
 }
 

@@ -5,13 +5,13 @@ static void allocate_type_in_constant(constant_t *cons) {
 		cons->TYPE.kind = STANDARD;
 		cons->TYPE.standard = INTEGER;
 
-		//printf("%d:%s", cons->number, type_s(cons->TYPE));
+		printf("%s", type_s(cons->TYPE));
 	}
 	else if (cons->kind == FALSE || cons->kind == TRUE) {
 		cons->TYPE.kind = STANDARD;
 		cons->TYPE.standard = BOOLEAN;
 
-		//printf("%s:%s", boolean_s(*cons), type_s(cons->TYPE));
+		printf("%s", type_s(cons->TYPE));
 	}
 	else if (cons->kind == STRING) {
 		/* Extended specification */
@@ -23,7 +23,7 @@ static void allocate_type_in_constant(constant_t *cons) {
 		/*cons->TYPE.kind = STANDARD;
 		cons->TYPE.standard = CHAR;*/
 
-		//printf("'%s':%s", cons->string, type_s(cons->TYPE));
+		printf("%s", type_s(cons->TYPE));
 	}
 }
 
@@ -36,7 +36,7 @@ static void allocate_type_in_variable_indicator(program_t *program, REF_SCOPE sc
 			if (!strcmp(v->name, var_idr->name)) {
 				var_idr->TYPE = v->type;
 
-				//printf("%s:%s", var_idr->name, type_s(var_idr->TYPE));
+				printf("%s", type_s(var_idr->TYPE));
 				return;
 			}
 		}
@@ -48,7 +48,7 @@ static void allocate_type_in_variable_indicator(program_t *program, REF_SCOPE sc
 					if (!strcmp(pp->name, var_idr->name)) {
 						var_idr->TYPE = pp->type;
 
-						//printf("%s:%s", var_idr->name, type_s(var_idr->TYPE));
+						printf("%s", type_s(var_idr->TYPE));
 						return;
 					}
 				}
@@ -57,7 +57,7 @@ static void allocate_type_in_variable_indicator(program_t *program, REF_SCOPE sc
 					if (!strcmp(pv->name, var_idr->name)) {
 						var_idr->TYPE = pv->type;
 
-						//printf("%s:%s", var_idr->name, type_s(var_idr->TYPE));
+						printf("%s", type_s(var_idr->TYPE));
 						return;
 					}
 				}
@@ -68,7 +68,7 @@ static void allocate_type_in_variable_indicator(program_t *program, REF_SCOPE sc
 			if (!strcmp(v->name, var_idr->name)) {
 				var_idr->TYPE = v->type;
 
-				//printf("%s:%s", var_idr->name, type_s(var_idr->TYPE));
+				printf("%s", type_s(var_idr->TYPE));
 				return;
 			}
 		}
@@ -80,78 +80,83 @@ static void allocate_type_in_factor(program_t *program, REF_SCOPE scope, factor_
 		allocate_type_in_variable_indicator(program, scope, &factor->var_idr);
 		factor->TYPE = factor->var_idr.TYPE;
 
-		//printf(":%s(factor)", type_s(factor->TYPE));
+		printf(":%s(factor)", type_s(factor->TYPE));
 	}
 	else if (factor->kind == CONST) {
 		allocate_type_in_constant(&factor->cons);
 		factor->TYPE = factor->cons.TYPE;
 
-		//printf(":%s(factor)", type_s(factor->TYPE));
+		printf(":%s(factor)", type_s(factor->TYPE));
 	}
 	else if (factor->kind == EXPR) {
 		allocate_type_in_expression(program, scope, factor->expr);
 		factor->TYPE = factor->expr->TYPE;
 
-		//printf(":%s(factor)", type_s(factor->TYPE));
+		printf(":%s(factor)", type_s(factor->TYPE));
 	}
 	else if (factor->kind == INVERT_FACTOR) {
-		//printf("!");
-
 		allocate_type_in_factor(program, scope, factor->inv_factor);
 		factor->TYPE = factor->inv_factor->TYPE;
 
-		//printf(":%s(factor)", type_s(factor->TYPE));
+		printf(":%s(factor)", type_s(factor->TYPE));
 	}
 	else if (factor->kind == CAST_EXPR) {
-		//printf("(%s){", type_s(factor->TYPE));
+		printf("(%s)(", type_s(factor->TYPE));
+
 		factor->TYPE.kind = STANDARD;
 		factor->TYPE.standard = factor->cast_std_type;
 
-		//printf("}:%s(factor)", type_s(factor->TYPE));
+		printf(")");
 	}
 }
 
 static void allocate_type_in_term(program_t *program, REF_SCOPE scope, term_t *term) {
 	allocate_type_in_factor(program, scope, &term->factor);
 	term->TYPE = term->factor.TYPE;
-	//printf(":%s(term)", type_s(term->TYPE));
+	printf(":%s(term)", type_s(term->TYPE));
 
 	if (term->next != NULL) {
-		//printf(" %s ", multiplicative_operator_s(term->mul_opr));
+		printf(" %s ", multiplicative_operator_s(term->mul_opr));
 
 		allocate_type_in_term(program, scope, term->next);
 	}
 }
 
 static void allocate_type_in_simple_expression(program_t *program, REF_SCOPE scope, simple_expression_t *simp_expr) {
-//	if (simp_expr->prefix == POSITIVE) //printf("+");
-//	else if (simp_expr->prefix == NEGATIVE) //printf("-");
-
 	allocate_type_in_term(program, scope, &simp_expr->term);
 	simp_expr->TYPE = simp_expr->term.TYPE;
-	//printf(":%s(simp_expr)", type_s(simp_expr->TYPE));
+	printf(":%s(simp_expr)", type_s(simp_expr->TYPE));
 
 	if (simp_expr->next != NULL) {
-		//printf(" %s ", additive_operator_s(simp_expr->add_opr));
+		printf(" %s ", additive_operator_s(simp_expr->add_opr));
 
 		allocate_type_in_simple_expression(program, scope, simp_expr->next);
 	}
 }
 
 static void allocate_type_in_expression(program_t *program, REF_SCOPE scope, expression_t *expr) {
+	expr->is_start_point = 1;
 	allocate_type_in_simple_expression(program, scope, &expr->simp_expr);
 
 	if (expr->next != NULL) {
-		//printf(" %s ", relational_operator_s(expr->rel_opr));
-
-		expr->TYPE.kind = STANDARD;
-		expr->TYPE.standard = BOOLEAN;
+		printf(" %s ", relational_operator_s(expr->rel_opr));
 		allocate_type_in_expression(program, scope, expr->next);
+		expr->next->is_start_point = 0;
+
+		expr->TYPE = expr->simp_expr.TYPE;
+		expr->WHOLE_TYPE.kind = STANDARD;
+		expr->WHOLE_TYPE.standard = BOOLEAN;
 	} else {
-		expr->TYPE = expr->simp_expr.TYPE;	
+		expr->TYPE = expr->simp_expr.TYPE;
+		expr->WHOLE_TYPE = expr->TYPE;
 	}
 
-	//printf(":%s(expr)\n\n", type_s(expr->TYPE));
+	printf(":%s(expr)", type_s(expr->TYPE));
+	printf(":%s(expr')", type_s(expr->WHOLE_TYPE));
+	printf("\n");
+	print_expression(*expr);
+	printf("\n");
+	fflush(stdout);
 }
 
 static void allocate_type_in_expressions(program_t *program, REF_SCOPE scope, expressions_t *exprs) {
@@ -195,7 +200,7 @@ static void allocate_type_in_statement(program_t *program, REF_SCOPE scope, stat
 		assignment_statement_t *s1 = (assignment_statement_t *)(stmt);
 
 		allocate_type_in_variable_indicator(program, scope, &s1->target_var_idr);
-		//printf(" := ");
+		printf(" := ");
 		allocate_type_in_expression(program, scope, &s1->expr);
 
 	} else if (stmt->kind == CONDITION) {
@@ -255,7 +260,7 @@ extern void allocate_type(program_t *program) {
 		strcpy(scope.proc_name, p->name);
 
 		allocate_type_in_statement(program, scope, p->stmt);
-		//printf("\n\n\n");
+		printf("\n\n\n");
 	}
 
 	// program block

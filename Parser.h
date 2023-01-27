@@ -193,6 +193,8 @@ typedef struct expression_t {
 	struct expression_t *next;
 
 	/* type allocation */
+	int is_start_point;
+	type_t WHOLE_TYPE;
 	type_t TYPE;
 
 	/* debug information */

@@ -16,6 +16,7 @@ extern char *relational_operator_s(const relational_operator_t rel_opr);
 extern char *boolean_s(const constant_t cons);
 
 extern void print_constant(const constant_t cons);
+extern void print_variable_indicator(const variable_indicator_t var_idr);
 extern void print_factor(const factor_t factor);
 extern void print_term(const term_t term);
 extern void print_simple_expression(const simple_expression_t simp_expr);
