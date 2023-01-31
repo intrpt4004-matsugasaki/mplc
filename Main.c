@@ -39,17 +39,18 @@ int main(const int argc, char *argv[]) {
 	type_analyze(p);
 	print_xref_table(p);
 	//optimize_code(&p);
-	//generate_code(assign_csl_ext(get_stem(argv[1])), p);
+	generate_code(assign_csl_ext(get_stem(argv[1])), p);
 }
 
 /* TODO */
 /*
  * impl: Debug.c
  * BUG FIX: type checker (and type allocator?)
+ * expression_t; yuusendo and zentai tositeno type_t wo kouryo sita data structure ni.
  *
  * impl: Code Generator
  *
- * Scanner -> Tokenizer: file -> [token_t]
+ * Scanner ~> Tokenizer: file -> [token_t]
  * Parser: [token_t] -> program_t
  *
  * unite error()
